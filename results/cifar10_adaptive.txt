@@ -50,3 +50,5 @@ METHOD: MCN
 >>> Training Task 2: deer vs dog
   [Task 2] task module + router + head (full lr) + base_high (adaptive lr)
   lr groups: base_high=1.00e-04  task=1.00e-03
+  [MCN-T2] Epoch 1: loss=0.490  acc=76.7%
+  [MCN-T2] Epoch 2: loss=0.393  acc=82.7%
