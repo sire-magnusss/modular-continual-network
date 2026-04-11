@@ -52,3 +52,10 @@ METHOD: MCN
   lr groups: base_high=1.00e-04  task=1.00e-03
   [MCN-T2] Epoch 1: loss=0.490  acc=76.7%
   [MCN-T2] Epoch 2: loss=0.393  acc=82.7%
+  [MCN-T2] Epoch 3: loss=0.358  acc=84.3%
+  [MCN-T2] Epoch 4: loss=0.306  acc=87.0%
+  [MCN-T2] Epoch 5: loss=0.287  acc=88.0%
+  [MCN-T2] Epoch 6: loss=0.274  acc=88.6%
+  [MCN-T2] Epoch 7: loss=0.262  acc=89.5%
+  [MCN-T2] Epoch 8: loss=0.242  acc=90.2%
+  [MCN-T2] Epoch 9: loss=0.233  acc=90.8%
