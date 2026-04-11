@@ -46,7 +46,7 @@ class MCNNoRouter(MCN):
         ])
 
     def forward(self, x: torch.Tensor, task_id: int) -> torch.Tensor:
-        base_feat = self.base_encoder(x)
+        base_feat = self.base_high(self.base_low(x))
         task_feat = self.task_modules[task_id](x)
         # Simple concat + project instead of attention
         blended = self.routers[task_id](torch.cat([base_feat, task_feat], dim=1))

@@ -1,32 +1,29 @@
 """
-MCN Trainer
-------------
-Training protocol for the Modular Continual Network:
+MCN Trainer — with Adaptive Layer Freezing support
+----------------------------------------------------
+Task 0:
+  - Train ALL parameters at base_lr
+  - After training: freeze base_low, leave base_high adaptable
 
-  Task 0:
-    - Train ALL parameters (base encoder + task 0 module/router/head)
-    - After training: FREEZE the base encoder
+Task t > 0:
+  - base_high params  at base_lr × adaptive_lr_scale  (slow drift OK)
+  - task module + router + head  at base_lr            (full plasticity)
 
-  Task t > 0:
-    - Only train task module[t] + router[t] + head[t]
-    - Base encoder is frozen — Task 0 representations are untouched
-    - No penalties, no masks — isolation is architectural
-
-This is the key claim to validate:
-  "With a frozen base encoder and task-specific adapters, we can achieve
-   near-zero forgetting while maintaining plasticity for new tasks."
+The two-group optimizer lets base_high slowly adapt to new task domains
+without aggressively forgetting Task 0 structure. The key insight is that
+high-level semantic representations need to shift for structurally different
+tasks (e.g., permuted MNIST), but should move slowly to preserve past learning.
 """
 
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from models.mcn import MCN
 from utils.metrics import MetricTracker
 
 
 class MCNTrainer:
-    def __init__(self, model: MCN, device: torch.device,
+    def __init__(self, model, device: torch.device,
                  lr: float = 1e-3, epochs_per_task: int = 5):
         self.model = model
         self.device = device
@@ -34,16 +31,31 @@ class MCNTrainer:
         self.epochs_per_task = epochs_per_task
         self.model.to(device)
 
+    def _build_optimizer(self, task_id: int) -> torch.optim.Optimizer:
+        """
+        Build optimizer with appropriate parameter groups.
+        Uses get_task_param_groups if available (MCN with adaptive freezing),
+        otherwise falls back to get_task_parameters (ablation variants).
+        """
+        if hasattr(self.model, "get_task_param_groups"):
+            param_groups = self.model.get_task_param_groups(task_id, base_lr=self.lr)
+        else:
+            param_groups = [{"params": self.model.get_task_parameters(task_id),
+                             "lr": self.lr}]
+        return torch.optim.Adam(param_groups)
+
     def train_task(self, task_id: int, train_loader: DataLoader):
         self.model.train()
-
-        # Get only the parameters relevant to this task
-        params = self.model.get_task_parameters(task_id)
-        optimizer = torch.optim.Adam(params, lr=self.lr)
+        optimizer = self._build_optimizer(task_id)
         criterion = nn.CrossEntropyLoss()
 
         is_task_zero = not self.model._base_frozen
         prefix = "[MCN-T0]" if is_task_zero else f"[MCN-T{task_id}]"
+
+        # Show which lr groups are active this task
+        if not is_task_zero and hasattr(self.model, "adaptive_lr_scale"):
+            scale = self.model.adaptive_lr_scale
+            print(f"  lr groups: base_high={self.lr * scale:.2e}  task={self.lr:.2e}")
 
         for epoch in range(self.epochs_per_task):
             total_loss = 0.0
@@ -69,7 +81,7 @@ class MCNTrainer:
             acc = correct / total
             print(f"  {prefix} Epoch {epoch+1}: loss={total_loss/total:.3f}  acc={acc*100:.1f}%")
 
-        # After Task 0, freeze the base encoder
+        # After Task 0, apply adaptive freezing
         if task_id == 0 and not self.model._base_frozen:
             self.model.freeze_base_encoder()
 
@@ -91,15 +103,20 @@ class MCNTrainer:
         print(f"METHOD: {method_name}")
         print("="*60)
 
-        # Print parameter budget (only if the model supports it)
         if hasattr(self.model, "param_count"):
             counts = self.model.param_count()
-            print(f"  Base encoder params : {counts['base_encoder']:,}")
-            print(f"  Per-task params     : {counts['per_task_total']:,} "
+            # Show split if adaptive freezing is present
+            if "base_low" in counts:
+                print(f"  base_low  (frozen)   : {counts['base_low']:,} params")
+                print(f"  base_high (adaptive) : {counts['base_high']:,} params  "
+                      f"@ {getattr(self.model,'adaptive_lr_scale',1.0)}× lr")
+            else:
+                print(f"  Base encoder params  : {counts['base_encoder']:,}")
+            print(f"  Per-task params      : {counts['per_task_total']:,} "
                   f"(module={counts['per_task_module']:,}, "
                   f"router={counts['per_task_router']:,}, "
                   f"head={counts['per_task_head']:,})")
-            print(f"  Total ({benchmark.num_tasks} tasks)    : {counts['total_for_n_tasks']:,}")
+            print(f"  Total ({benchmark.num_tasks} tasks)     : {counts['total_for_n_tasks']:,}")
         else:
             total = sum(p.numel() for p in self.model.parameters())
             print(f"  Total params: {total:,}")
@@ -107,9 +124,10 @@ class MCNTrainer:
         for task_id in range(benchmark.num_tasks):
             print(f"\n>>> Training {benchmark.task_description(task_id)}")
             if task_id == 0:
-                print(f"  [Task 0] Training full network, then freezing base encoder")
+                print(f"  [Task 0] Training full network")
             else:
-                print(f"  [Task {task_id}] Training only: task module + router + head")
+                print(f"  [Task {task_id}] task module + router + head (full lr) "
+                      f"+ base_high (adaptive lr)")
 
             train_loader = benchmark.get_train_loader(task_id)
             self.train_task(task_id, train_loader)

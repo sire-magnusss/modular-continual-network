@@ -1,0 +1,18 @@
+[device] Using MPS (Apple Silicon GPU)
+
+Benchmark : MNIST
+Methods   : mcn
+Epochs    : 10 per task
+Device    : mps
+Tasks     : 5
+
+============================================================
+METHOD: MCN
+============================================================
+  base_low  (frozen)   : 259,776 params
+  base_high (adaptive) : 2,066,432 params  @ 0.1× lr
+  Per-task params      : 1,243,533 (module=482,817, router=755,586, head=5,130)
+  Total (5 tasks)     : 8,543,873
+
+>>> Training Task 0: Original MNIST
+  [Task 0] Training full network

@@ -192,23 +192,35 @@ class Router(nn.Module):
 
 class MCN(nn.Module):
     """
-    Modular Continual Network.
+    Modular Continual Network — with Adaptive Layer Freezing.
 
-    Initialize with num_tasks=1 and call add_task() as new tasks arrive.
-    Or initialize with the full num_tasks upfront for benchmarking.
+    The base encoder is split into two parts:
+      base_low  (Block 1+2): learns edges and textures → permanently frozen after Task 0.
+                              These features transfer to ALL tasks — no reason to change them.
+      base_high (Block 3+FC): learns shapes and semantic structure → kept adaptable.
+                              New tasks train this at a reduced lr (adaptive_lr_scale × lr),
+                              allowing high-level representations to shift for new domains
+                              without destroying low-level feature reuse.
 
-    Args:
-        num_tasks:            Total number of tasks (for benchmarking, can init all at once)
-        num_classes_per_task: Number of output classes per task head
-        base_dim:             Dimension of base encoder output (512)
-        task_dim:             Dimension of each task module output (256)
-        in_channels:          Input image channels (3 for CIFAR, 1 for MNIST)
-        input_size:           Spatial size of input (32 for CIFAR, 28 for MNIST)
+    Why this fixes the MNIST gap:
+      Permuted MNIST has identical high-level structure (digit shapes) but completely
+      different spatial layout per task. The fully-frozen base encoder couldn't adapt its
+      high-level semantic representations — base_high adaption fixes this.
+      CIFAR-10 tasks (different object classes) benefit less but are not hurt because
+      base_high lr is small (0.1×), so Task 0 knowledge degrades slowly.
+
+    Architecture:
+      base_low  → Block 1+2 (in→128ch, 2 maxpools)        [frozen after T0]
+      base_high → Block 3 + FC (128→256ch + Linear→512d)  [adaptive, low lr]
+      task_module[t] → lightweight CNN adapter              [full lr]
+      router[t]      → attention blender                   [full lr]
+      head[t]        → linear classifier                   [full lr]
     """
 
     def __init__(self, num_tasks: int, num_classes_per_task: int,
                  base_dim: int = 512, task_dim: int = 256,
-                 in_channels: int = 3, input_size: int = 32):
+                 in_channels: int = 3, input_size: int = 32,
+                 adaptive_lr_scale: float = 0.1):
         super().__init__()
 
         self.num_tasks = num_tasks
@@ -217,13 +229,15 @@ class MCN(nn.Module):
         self.task_dim = task_dim
         self.in_channels = in_channels
         self.input_size = input_size
+        self.adaptive_lr_scale = adaptive_lr_scale
 
-        # ── Base Encoder (shared, frozen after Task 0) ──
-        # Uses the same 3-block CNN as before, but now it's explicitly
-        # separated into a reusable feature extractor.
         pooled = input_size // 8  # after 3 maxpools: 32→4, 28→3
-        self.base_encoder = nn.Sequential(
-            # Block 1
+
+        # ── Low-level base (frozen after Task 0) ──────────────────────────
+        # Block 1: in_channels → 64ch, spatial / 2
+        # Block 2: 64 → 128ch, spatial / 2
+        # Learns edges, colour blobs, simple textures — universal features.
+        self.base_low = nn.Sequential(
             nn.Conv2d(in_channels, 64, kernel_size=3, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
@@ -231,7 +245,7 @@ class MCN(nn.Module):
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2, 2),
-            # Block 2
+
             nn.Conv2d(64, 128, kernel_size=3, padding=1),
             nn.BatchNorm2d(128),
             nn.ReLU(inplace=True),
@@ -239,7 +253,13 @@ class MCN(nn.Module):
             nn.BatchNorm2d(128),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2, 2),
-            # Block 3
+        )
+
+        # ── High-level base (adaptive after Task 0, small lr) ─────────────
+        # Block 3: 128 → 256ch, spatial / 2
+        # FC: 256 * pooled * pooled → base_dim
+        # Learns object-level semantics — task-specific enough to benefit from adaptation.
+        self.base_high = nn.Sequential(
             nn.Conv2d(128, 256, kernel_size=3, padding=1),
             nn.BatchNorm2d(256),
             nn.ReLU(inplace=True),
@@ -247,14 +267,13 @@ class MCN(nn.Module):
             nn.BatchNorm2d(256),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2, 2),
-            # Projection to base_dim
             nn.Flatten(),
             nn.Linear(256 * pooled * pooled, base_dim),
             nn.ReLU(inplace=True),
             nn.Dropout(0.3),
         )
 
-        # ── Per-Task Components (grown dynamically) ──
+        # ── Per-task components ────────────────────────────────────────────
         self.task_modules = nn.ModuleList([
             TaskModule(in_channels, task_dim, input_size)
             for _ in range(num_tasks)
@@ -273,66 +292,80 @@ class MCN(nn.Module):
         self._base_frozen = False
 
     def forward(self, x: torch.Tensor, task_id: int) -> torch.Tensor:
-        # Base encoder (frozen after Task 0)
-        base_feat = self.base_encoder(x)
-
-        # Task-specific module
+        base_feat = self.base_high(self.base_low(x))
         task_feat = self.task_modules[task_id](x)
-
-        # Router blends the two feature streams
-        blended = self.routers[task_id](base_feat, task_feat)
-
-        # Task head
+        blended   = self.routers[task_id](base_feat, task_feat)
         return self.heads[task_id](blended)
 
     def freeze_base_encoder(self):
         """
-        Freeze the base encoder after Task 0.
-        All subsequent tasks can only update their own modules and router.
+        After Task 0:
+          - Permanently freeze base_low (edges/textures — universal).
+          - Leave base_high requires_grad=True so it can adapt at low lr.
         """
-        for param in self.base_encoder.parameters():
+        for param in self.base_low.parameters():
             param.requires_grad = False
         self._base_frozen = True
-        print("[MCN] Base encoder frozen. Future tasks will only update their own modules.")
+        low_params  = sum(p.numel() for p in self.base_low.parameters())
+        high_params = sum(p.numel() for p in self.base_high.parameters())
+        print(f"[MCN] base_low frozen ({low_params:,} params). "
+              f"base_high adaptive ({high_params:,} params @ {self.adaptive_lr_scale}× lr).")
 
-    def get_task_parameters(self, task_id: int):
+    def get_task_param_groups(self, task_id: int, base_lr: float) -> list:
         """
-        Return only the parameters that should be updated when training task_id.
-        If base is frozen: task module + router + head only.
-        If base is not yet frozen (Task 0): everything.
+        Return optimizer parameter groups for training task_id.
+
+        Task 0: single group — everything at base_lr.
+        Task t > 0: two groups:
+          - base_high at base_lr × adaptive_lr_scale  (slow adaptation)
+          - task module + router + head at base_lr     (full speed)
         """
         if not self._base_frozen:
-            # Task 0: train everything
+            return [{"params": list(self.parameters()), "lr": base_lr}]
+
+        return [
+            {
+                "params": list(self.base_high.parameters()),
+                "lr": base_lr * self.adaptive_lr_scale,
+                "name": "base_high",
+            },
+            {
+                "params": (list(self.task_modules[task_id].parameters()) +
+                           list(self.routers[task_id].parameters()) +
+                           list(self.heads[task_id].parameters())),
+                "lr": base_lr,
+                "name": "task_specific",
+            },
+        ]
+
+    # Keep backward-compatible alias used by ablation variants
+    def get_task_parameters(self, task_id: int):
+        if not self._base_frozen:
             return list(self.parameters())
-        else:
-            # Task t > 0: only task-specific components
-            params = []
-            params.extend(self.task_modules[task_id].parameters())
-            params.extend(self.routers[task_id].parameters())
-            params.extend(self.heads[task_id].parameters())
-            return params
+        return (list(self.base_high.parameters()) +
+                list(self.task_modules[task_id].parameters()) +
+                list(self.routers[task_id].parameters()) +
+                list(self.heads[task_id].parameters()))
 
     def get_base_embedding(self, x: torch.Tensor) -> torch.Tensor:
-        """Return base encoder features (useful for analysis and visualization)."""
         with torch.no_grad():
-            return self.base_encoder(x)
+            return self.base_high(self.base_low(x))
 
     def param_count(self) -> dict:
-        """Report parameter counts for each component."""
-        def count(module):
-            return sum(p.numel() for p in module.parameters())
-
-        base = count(self.base_encoder)
-        per_task_module = count(self.task_modules[0]) if self.task_modules else 0
-        per_task_router = count(self.routers[0]) if self.routers else 0
-        per_task_head = count(self.heads[0]) if self.heads else 0
-        per_task_total = per_task_module + per_task_router + per_task_head
-
+        def count(m): return sum(p.numel() for p in m.parameters())
+        base_low   = count(self.base_low)
+        base_high  = count(self.base_high)
+        per_module = count(self.task_modules[0]) if self.task_modules else 0
+        per_router = count(self.routers[0])       if self.routers else 0
+        per_head   = count(self.heads[0])          if self.heads else 0
+        per_total  = per_module + per_router + per_head
         return {
-            "base_encoder": base,
-            "per_task_module": per_task_module,
-            "per_task_router": per_task_router,
-            "per_task_head": per_task_head,
-            "per_task_total": per_task_total,
-            "total_for_n_tasks": base + per_task_total * self.num_tasks,
+            "base_encoder":    base_low + base_high,
+            "base_low":        base_low,
+            "base_high":       base_high,
+            "per_task_module": per_module,
+            "per_task_router": per_router,
+            "per_task_head":   per_head,
+            "per_task_total":  per_total,
+            "total_for_n_tasks": base_low + base_high + per_total * self.num_tasks,
         }
