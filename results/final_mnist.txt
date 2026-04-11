@@ -12,3 +12,447 @@ METHOD: Naive (no forgetting prevention)
 
 >>> Training Task 0: Original MNIST
   [Naive] Task 0 Epoch 1: loss=0.230  acc=93.0%
+  [Naive] Task 0 Epoch 2: loss=0.089  acc=97.2%
+  [Naive] Task 0 Epoch 3: loss=0.060  acc=98.1%
+  [Naive] Task 0 Epoch 4: loss=0.045  acc=98.6%
+  [Naive] Task 0 Epoch 5: loss=0.037  acc=98.8%
+  [Naive] Task 0 Epoch 6: loss=0.029  acc=99.0%
+  [Naive] Task 0 Epoch 7: loss=0.025  acc=99.2%
+  [Naive] Task 0 Epoch 8: loss=0.023  acc=99.2%
+  [Naive] Task 0 Epoch 9: loss=0.021  acc=99.3%
+  [Naive] Task 0 Epoch 10: loss=0.016  acc=99.5%
+  Evaluating all tasks after training task 0...
+    Task 0: 98.1% <<< THIS TASK
+
+>>> Training Task 1: Permuted MNIST (seed variant 1)
+  [Naive] Task 1 Epoch 1: loss=0.243  acc=92.5%
+  [Naive] Task 1 Epoch 2: loss=0.089  acc=97.3%
+  [Naive] Task 1 Epoch 3: loss=0.060  acc=98.1%
+  [Naive] Task 1 Epoch 4: loss=0.041  acc=98.7%
+  [Naive] Task 1 Epoch 5: loss=0.033  acc=98.9%
+  [Naive] Task 1 Epoch 6: loss=0.027  acc=99.1%
+  [Naive] Task 1 Epoch 7: loss=0.022  acc=99.3%
+  [Naive] Task 1 Epoch 8: loss=0.021  acc=99.3%
+  [Naive] Task 1 Epoch 9: loss=0.018  acc=99.4%
+  [Naive] Task 1 Epoch 10: loss=0.017  acc=99.4%
+  Evaluating all tasks after training task 1...
+    Task 0: 95.4%      OLDER TASK
+    Task 1: 97.7% <<< THIS TASK
+
+>>> Training Task 2: Permuted MNIST (seed variant 2)
+  [Naive] Task 2 Epoch 1: loss=0.243  acc=92.4%
+  [Naive] Task 2 Epoch 2: loss=0.091  acc=97.1%
+  [Naive] Task 2 Epoch 3: loss=0.057  acc=98.2%
+  [Naive] Task 2 Epoch 4: loss=0.041  acc=98.6%
+  [Naive] Task 2 Epoch 5: loss=0.031  acc=98.9%
+  [Naive] Task 2 Epoch 6: loss=0.026  acc=99.1%
+  [Naive] Task 2 Epoch 7: loss=0.020  acc=99.4%
+  [Naive] Task 2 Epoch 8: loss=0.020  acc=99.4%
+  [Naive] Task 2 Epoch 9: loss=0.018  acc=99.3%
+  [Naive] Task 2 Epoch 10: loss=0.022  acc=99.3%
+  Evaluating all tasks after training task 2...
+    Task 0: 86.2%      OLDER TASK
+    Task 1: 93.8%      OLDER TASK
+    Task 2: 97.6% <<< THIS TASK
+
+>>> Training Task 3: Permuted MNIST (seed variant 3)
+  [Naive] Task 3 Epoch 1: loss=0.254  acc=92.2%
+  [Naive] Task 3 Epoch 2: loss=0.091  acc=97.1%
+  [Naive] Task 3 Epoch 3: loss=0.058  acc=98.2%
+  [Naive] Task 3 Epoch 4: loss=0.039  acc=98.8%
+  [Naive] Task 3 Epoch 5: loss=0.031  acc=99.0%
+  [Naive] Task 3 Epoch 6: loss=0.023  acc=99.3%
+  [Naive] Task 3 Epoch 7: loss=0.023  acc=99.3%
+  [Naive] Task 3 Epoch 8: loss=0.019  acc=99.4%
+  [Naive] Task 3 Epoch 9: loss=0.014  acc=99.5%
+  [Naive] Task 3 Epoch 10: loss=0.021  acc=99.3%
+  Evaluating all tasks after training task 3...
+    Task 0: 78.5%      OLDER TASK
+    Task 1: 86.2%      OLDER TASK
+    Task 2: 95.0%      OLDER TASK
+    Task 3: 97.9% <<< THIS TASK
+
+>>> Training Task 4: Permuted MNIST (seed variant 4)
+  [Naive] Task 4 Epoch 1: loss=0.268  acc=91.7%
+  [Naive] Task 4 Epoch 2: loss=0.093  acc=97.1%
+  [Naive] Task 4 Epoch 3: loss=0.061  acc=98.1%
+  [Naive] Task 4 Epoch 4: loss=0.041  acc=98.6%
+  [Naive] Task 4 Epoch 5: loss=0.031  acc=99.0%
+  [Naive] Task 4 Epoch 6: loss=0.026  acc=99.2%
+  [Naive] Task 4 Epoch 7: loss=0.025  acc=99.2%
+  [Naive] Task 4 Epoch 8: loss=0.018  acc=99.4%
+  [Naive] Task 4 Epoch 9: loss=0.015  acc=99.5%
+  [Naive] Task 4 Epoch 10: loss=0.019  acc=99.4%
+  Evaluating all tasks after training task 4...
+    Task 0: 78.2%      OLDER TASK
+    Task 1: 77.1%      OLDER TASK
+    Task 2: 89.3%      OLDER TASK
+    Task 3: 95.3%      OLDER TASK
+    Task 4: 97.6% <<< THIS TASK
+
+--- Accuracy Matrix R[trained_up_to][task] ---
+      T0  T1  T2  T3  T4
+After T0:  98.1    ---    ---    ---    ---  
+After T1:  95.4   97.7    ---    ---    ---  
+After T2:  86.2   93.8   97.6    ---    ---  
+After T3:  78.5   86.2   95.0   97.9    ---  
+After T4:  78.2   77.1   89.3   95.3   97.6  
+
+Average Accuracy : 87.49%
+Backward Transfer: -12.83%
+Forgetting Measure: 12.83%
+
+============================================================
+METHOD: EWC (λ=5000.0)
+============================================================
+
+>>> Training Task 0: Original MNIST
+  [EWC] Task 0 Epoch 1: task_loss=0.230  ewc_loss=0.0000  acc=93.1%
+  [EWC] Task 0 Epoch 2: task_loss=0.088  ewc_loss=0.0000  acc=97.3%
+  [EWC] Task 0 Epoch 3: task_loss=0.060  ewc_loss=0.0000  acc=98.2%
+  [EWC] Task 0 Epoch 4: task_loss=0.045  ewc_loss=0.0000  acc=98.5%
+  [EWC] Task 0 Epoch 5: task_loss=0.035  ewc_loss=0.0000  acc=98.8%
+  [EWC] Task 0 Epoch 6: task_loss=0.030  ewc_loss=0.0000  acc=99.1%
+  [EWC] Task 0 Epoch 7: task_loss=0.027  ewc_loss=0.0000  acc=99.1%
+  [EWC] Task 0 Epoch 8: task_loss=0.019  ewc_loss=0.0000  acc=99.4%
+  [EWC] Task 0 Epoch 9: task_loss=0.019  ewc_loss=0.0000  acc=99.4%
+  [EWC] Task 0 Epoch 10: task_loss=0.021  ewc_loss=0.0000  acc=99.3%
+[EWC] Consolidated task 0 (λ=5000.0, 1024 samples)
+  Evaluating all tasks after training task 0...
+    Task 0: 98.1% <<< THIS TASK
+
+>>> Training Task 1: Permuted MNIST (seed variant 1)
+  [EWC] Task 1 Epoch 1: task_loss=0.240  ewc_loss=0.0112  acc=92.5%
+  [EWC] Task 1 Epoch 2: task_loss=0.095  ewc_loss=0.0135  acc=97.0%
+  [EWC] Task 1 Epoch 3: task_loss=0.064  ewc_loss=0.0137  acc=98.0%
+  [EWC] Task 1 Epoch 4: task_loss=0.048  ewc_loss=0.0136  acc=98.4%
+  [EWC] Task 1 Epoch 5: task_loss=0.038  ewc_loss=0.0134  acc=98.8%
+  [EWC] Task 1 Epoch 6: task_loss=0.030  ewc_loss=0.0129  acc=99.0%
+  [EWC] Task 1 Epoch 7: task_loss=0.028  ewc_loss=0.0127  acc=99.1%
+  [EWC] Task 1 Epoch 8: task_loss=0.025  ewc_loss=0.0129  acc=99.2%
+  [EWC] Task 1 Epoch 9: task_loss=0.019  ewc_loss=0.0123  acc=99.4%
+  [EWC] Task 1 Epoch 10: task_loss=0.022  ewc_loss=0.0126  acc=99.3%
+[EWC] Consolidated task 1 (λ=5000.0, 1024 samples)
+  Evaluating all tasks after training task 1...
+    Task 0: 97.4%      OLDER TASK
+    Task 1: 97.7% <<< THIS TASK
+
+>>> Training Task 2: Permuted MNIST (seed variant 2)
+  [EWC] Task 2 Epoch 1: task_loss=0.245  ewc_loss=0.0333  acc=92.5%
+  [EWC] Task 2 Epoch 2: task_loss=0.098  ewc_loss=0.0349  acc=96.9%
+  [EWC] Task 2 Epoch 3: task_loss=0.071  ewc_loss=0.0351  acc=97.8%
+  [EWC] Task 2 Epoch 4: task_loss=0.052  ewc_loss=0.0348  acc=98.3%
+  [EWC] Task 2 Epoch 5: task_loss=0.045  ewc_loss=0.0347  acc=98.5%
+  [EWC] Task 2 Epoch 6: task_loss=0.037  ewc_loss=0.0342  acc=98.8%
+  [EWC] Task 2 Epoch 7: task_loss=0.032  ewc_loss=0.0336  acc=99.0%
+  [EWC] Task 2 Epoch 8: task_loss=0.029  ewc_loss=0.0328  acc=99.1%
+  [EWC] Task 2 Epoch 9: task_loss=0.027  ewc_loss=0.0334  acc=99.1%
+  [EWC] Task 2 Epoch 10: task_loss=0.025  ewc_loss=0.0334  acc=99.2%
+[EWC] Consolidated task 2 (λ=5000.0, 1024 samples)
+  Evaluating all tasks after training task 2...
+    Task 0: 97.2%      OLDER TASK
+    Task 1: 96.8%      OLDER TASK
+    Task 2: 97.5% <<< THIS TASK
+
+>>> Training Task 3: Permuted MNIST (seed variant 3)
+  [EWC] Task 3 Epoch 1: task_loss=0.243  ewc_loss=0.0619  acc=92.5%
+  [EWC] Task 3 Epoch 2: task_loss=0.100  ewc_loss=0.0639  acc=97.0%
+  [EWC] Task 3 Epoch 3: task_loss=0.071  ewc_loss=0.0643  acc=97.8%
+  [EWC] Task 3 Epoch 4: task_loss=0.059  ewc_loss=0.0642  acc=98.0%
+  [EWC] Task 3 Epoch 5: task_loss=0.048  ewc_loss=0.0640  acc=98.4%
+  [EWC] Task 3 Epoch 6: task_loss=0.047  ewc_loss=0.0649  acc=98.4%
+  [EWC] Task 3 Epoch 7: task_loss=0.040  ewc_loss=0.0648  acc=98.7%
+  [EWC] Task 3 Epoch 8: task_loss=0.035  ewc_loss=0.0643  acc=98.8%
+  [EWC] Task 3 Epoch 9: task_loss=0.036  ewc_loss=0.0655  acc=98.8%
+  [EWC] Task 3 Epoch 10: task_loss=0.032  ewc_loss=0.0644  acc=98.9%
+[EWC] Consolidated task 3 (λ=5000.0, 1024 samples)
+  Evaluating all tasks after training task 3...
+    Task 0: 97.0%      OLDER TASK
+    Task 1: 96.0%      OLDER TASK
+    Task 2: 96.7%      OLDER TASK
+    Task 3: 97.4% <<< THIS TASK
+
+>>> Training Task 4: Permuted MNIST (seed variant 4)
+  [EWC] Task 4 Epoch 1: task_loss=0.246  ewc_loss=0.1063  acc=92.3%
+  [EWC] Task 4 Epoch 2: task_loss=0.112  ewc_loss=0.1068  acc=96.5%
+  [EWC] Task 4 Epoch 3: task_loss=0.088  ewc_loss=0.1087  acc=97.2%
+  [EWC] Task 4 Epoch 4: task_loss=0.073  ewc_loss=0.1085  acc=97.7%
+  [EWC] Task 4 Epoch 5: task_loss=0.067  ewc_loss=0.1093  acc=97.8%
+  [EWC] Task 4 Epoch 6: task_loss=0.058  ewc_loss=0.1086  acc=98.1%
+  [EWC] Task 4 Epoch 7: task_loss=0.052  ewc_loss=0.1075  acc=98.3%
+  [EWC] Task 4 Epoch 8: task_loss=0.050  ewc_loss=0.1082  acc=98.4%
+  [EWC] Task 4 Epoch 9: task_loss=0.047  ewc_loss=0.1085  acc=98.5%
+  [EWC] Task 4 Epoch 10: task_loss=0.043  ewc_loss=0.1078  acc=98.6%
+[EWC] Consolidated task 4 (λ=5000.0, 1024 samples)
+  Evaluating all tasks after training task 4...
+    Task 0: 96.9%      OLDER TASK
+    Task 1: 96.6%      OLDER TASK
+    Task 2: 96.7%      OLDER TASK
+    Task 3: 96.4%      OLDER TASK
+    Task 4: 97.4% <<< THIS TASK
+
+--- Accuracy Matrix R[trained_up_to][task] ---
+      T0  T1  T2  T3  T4
+After T0:  98.1    ---    ---    ---    ---  
+After T1:  97.4   97.7    ---    ---    ---  
+After T2:  97.2   96.8   97.5    ---    ---  
+After T3:  97.0   96.0   96.7   97.4    ---  
+After T4:  96.9   96.6   96.7   96.4   97.4  
+
+Average Accuracy : 96.80%
+Backward Transfer: -1.00%
+Forgetting Measure: 1.00%
+
+============================================================
+METHOD: PackNet (prune_fraction=0.5)
+============================================================
+
+>>> Training Task 0: Original MNIST
+  Phase 1: Training free weights...
+  [PackNet] Task 0 Phase1 Epoch 1: loss=0.233  acc=92.9%
+  [PackNet] Task 0 Phase1 Epoch 2: loss=0.087  acc=97.3%
+  [PackNet] Task 0 Phase1 Epoch 3: loss=0.059  acc=98.1%
+  [PackNet] Task 0 Phase1 Epoch 4: loss=0.047  acc=98.5%
+  [PackNet] Task 0 Phase1 Epoch 5: loss=0.033  acc=98.9%
+  [PackNet] Task 0 Phase1 Epoch 6: loss=0.028  acc=99.0%
+  [PackNet] Task 0 Phase1 Epoch 7: loss=0.028  acc=99.1%
+  [PackNet] Task 0 Phase1 Epoch 8: loss=0.022  acc=99.3%
+  [PackNet] Task 0 Phase1 Epoch 9: loss=0.017  acc=99.4%
+  [PackNet] Task 0 Phase1 Epoch 10: loss=0.019  acc=99.4%
+[PackNet] Task 0 frozen 237,204 weights (50.0%). Free capacity remaining: 50.0%
+  Phase 2: Retraining pruned weights only...
+  [PackNet] Task 0 Phase2 Epoch 1: loss=0.005  acc=99.8%
+  [PackNet] Task 0 Phase2 Epoch 2: loss=0.002  acc=99.9%
+  [PackNet] Task 0 Phase2 Epoch 3: loss=0.001  acc=100.0%
+  Evaluating all tasks after training task 0...
+    Task 0: 98.6% <<< THIS TASK
+
+>>> Training Task 1: Permuted MNIST (seed variant 1)
+  Phase 1: Training free weights...
+  [PackNet] Task 1 Phase1 Epoch 1: loss=0.281  acc=91.4%
+  [PackNet] Task 1 Phase1 Epoch 2: loss=0.104  acc=96.8%
+  [PackNet] Task 1 Phase1 Epoch 3: loss=0.066  acc=97.9%
+  [PackNet] Task 1 Phase1 Epoch 4: loss=0.046  acc=98.5%
+  [PackNet] Task 1 Phase1 Epoch 5: loss=0.033  acc=98.9%
+  [PackNet] Task 1 Phase1 Epoch 6: loss=0.024  acc=99.2%
+  [PackNet] Task 1 Phase1 Epoch 7: loss=0.019  acc=99.4%
+  [PackNet] Task 1 Phase1 Epoch 8: loss=0.017  acc=99.4%
+  [PackNet] Task 1 Phase1 Epoch 9: loss=0.014  acc=99.6%
+  [PackNet] Task 1 Phase1 Epoch 10: loss=0.013  acc=99.6%
+[PackNet] Task 1 frozen 118,600 weights (25.0%). Free capacity remaining: 25.0%
+  Phase 2: Retraining pruned weights only...
+  [PackNet] Task 1 Phase2 Epoch 1: loss=0.004  acc=99.9%
+  [PackNet] Task 1 Phase2 Epoch 2: loss=0.001  acc=100.0%
+  [PackNet] Task 1 Phase2 Epoch 3: loss=0.001  acc=100.0%
+  Evaluating all tasks after training task 1...
+    Task 0: 98.0%      OLDER TASK
+    Task 1: 98.4% <<< THIS TASK
+
+>>> Training Task 2: Permuted MNIST (seed variant 2)
+  Phase 1: Training free weights...
+  [PackNet] Task 2 Phase1 Epoch 1: loss=0.320  acc=90.2%
+  [PackNet] Task 2 Phase1 Epoch 2: loss=0.122  acc=96.3%
+  [PackNet] Task 2 Phase1 Epoch 3: loss=0.082  acc=97.5%
+  [PackNet] Task 2 Phase1 Epoch 4: loss=0.058  acc=98.2%
+  [PackNet] Task 2 Phase1 Epoch 5: loss=0.042  acc=98.7%
+  [PackNet] Task 2 Phase1 Epoch 6: loss=0.031  acc=99.0%
+  [PackNet] Task 2 Phase1 Epoch 7: loss=0.023  acc=99.3%
+  [PackNet] Task 2 Phase1 Epoch 8: loss=0.018  acc=99.5%
+  [PackNet] Task 2 Phase1 Epoch 9: loss=0.016  acc=99.5%
+  [PackNet] Task 2 Phase1 Epoch 10: loss=0.010  acc=99.7%
+[PackNet] Task 2 frozen 59,300 weights (12.5%). Free capacity remaining: 12.5%
+  Phase 2: Retraining pruned weights only...
+  [PackNet] Task 2 Phase2 Epoch 1: loss=0.005  acc=99.9%
+  [PackNet] Task 2 Phase2 Epoch 2: loss=0.002  acc=100.0%
+  [PackNet] Task 2 Phase2 Epoch 3: loss=0.002  acc=100.0%
+  Evaluating all tasks after training task 2...
+    Task 0: 96.1%      OLDER TASK
+    Task 1: 97.2%      OLDER TASK
+    Task 2: 97.8% <<< THIS TASK
+
+>>> Training Task 3: Permuted MNIST (seed variant 3)
+  Phase 1: Training free weights...
+  [PackNet] Task 3 Phase1 Epoch 1: loss=0.387  acc=88.2%
+  [PackNet] Task 3 Phase1 Epoch 2: loss=0.157  acc=95.2%
+  [PackNet] Task 3 Phase1 Epoch 3: loss=0.109  acc=96.7%
+  [PackNet] Task 3 Phase1 Epoch 4: loss=0.083  acc=97.5%
+  [PackNet] Task 3 Phase1 Epoch 5: loss=0.065  acc=98.1%
+  [PackNet] Task 3 Phase1 Epoch 6: loss=0.051  acc=98.5%
+  [PackNet] Task 3 Phase1 Epoch 7: loss=0.041  acc=98.8%
+  [PackNet] Task 3 Phase1 Epoch 8: loss=0.032  acc=99.1%
+  [PackNet] Task 3 Phase1 Epoch 9: loss=0.025  acc=99.3%
+  [PackNet] Task 3 Phase1 Epoch 10: loss=0.020  acc=99.5%
+[PackNet] Task 3 frozen 29,650 weights (6.2%). Free capacity remaining: 6.2%
+  Phase 2: Retraining pruned weights only...
+  [PackNet] Task 3 Phase2 Epoch 1: loss=0.013  acc=99.7%
+  [PackNet] Task 3 Phase2 Epoch 2: loss=0.010  acc=99.8%
+  [PackNet] Task 3 Phase2 Epoch 3: loss=0.008  acc=99.9%
+  Evaluating all tasks after training task 3...
+    Task 0: 95.0%      OLDER TASK
+    Task 1: 96.2%      OLDER TASK
+    Task 2: 95.4%      OLDER TASK
+    Task 3: 97.5% <<< THIS TASK
+
+>>> Training Task 4: Permuted MNIST (seed variant 4)
+  Phase 1: Training free weights...
+  [PackNet] Task 4 Phase1 Epoch 1: loss=0.435  acc=86.7%
+  [PackNet] Task 4 Phase1 Epoch 2: loss=0.193  acc=94.1%
+  [PackNet] Task 4 Phase1 Epoch 3: loss=0.145  acc=95.6%
+  [PackNet] Task 4 Phase1 Epoch 4: loss=0.118  acc=96.4%
+  [PackNet] Task 4 Phase1 Epoch 5: loss=0.099  acc=96.9%
+  [PackNet] Task 4 Phase1 Epoch 6: loss=0.085  acc=97.4%
+  [PackNet] Task 4 Phase1 Epoch 7: loss=0.073  acc=97.8%
+  [PackNet] Task 4 Phase1 Epoch 8: loss=0.063  acc=98.1%
+  [PackNet] Task 4 Phase1 Epoch 9: loss=0.056  acc=98.3%
+  [PackNet] Task 4 Phase1 Epoch 10: loss=0.049  acc=98.6%
+[PackNet] Task 4 frozen 19,837 weights (4.2%). Free capacity remaining: 2.1%
+  Phase 2: Retraining pruned weights only...
+  [PackNet] Task 4 Phase2 Epoch 1: loss=0.042  acc=98.8%
+  [PackNet] Task 4 Phase2 Epoch 2: loss=0.038  acc=99.0%
+  [PackNet] Task 4 Phase2 Epoch 3: loss=0.035  acc=99.1%
+  Evaluating all tasks after training task 4...
+    Task 0: 94.1%      OLDER TASK
+    Task 1: 95.8%      OLDER TASK
+    Task 2: 94.4%      OLDER TASK
+    Task 3: 96.0%      OLDER TASK
+    Task 4: 96.8% <<< THIS TASK
+
+--- Accuracy Matrix R[trained_up_to][task] ---
+      T0  T1  T2  T3  T4
+After T0:  98.6    ---    ---    ---    ---  
+After T1:  98.0   98.4    ---    ---    ---  
+After T2:  96.1   97.2   97.8    ---    ---  
+After T3:  95.0   96.2   95.4   97.5    ---  
+After T4:  94.1   95.8   94.4   96.0   96.8  
+
+Average Accuracy : 95.42%
+Backward Transfer: -3.00%
+Forgetting Measure: 3.00%
+
+============================================================
+METHOD: MCN
+============================================================
+  base_low  (frozen)   : 259,776 params
+  base_high (adaptive) : 2,066,432 params  @ 0.1× lr
+  Per-task params      : 1,243,533 (module=482,817, router=755,586, head=5,130)
+  Total (5 tasks)     : 8,543,873
+
+>>> Training Task 0: Original MNIST
+  [Task 0] Training full network
+  [MCN-T0] Epoch 1: loss=0.153  acc=95.3%
+  [MCN-T0] Epoch 2: loss=0.045  acc=98.7%
+  [MCN-T0] Epoch 3: loss=0.034  acc=99.0%
+  [MCN-T0] Epoch 4: loss=0.030  acc=99.2%
+  [MCN-T0] Epoch 5: loss=0.024  acc=99.3%
+  [MCN-T0] Epoch 6: loss=0.020  acc=99.5%
+  [MCN-T0] Epoch 7: loss=0.020  acc=99.4%
+  [MCN-T0] Epoch 8: loss=0.017  acc=99.5%
+  [MCN-T0] Epoch 9: loss=0.016  acc=99.5%
+  [MCN-T0] Epoch 10: loss=0.011  acc=99.7%
+[MCN] base_low frozen (259,776 params). base_high adaptive (2,066,432 params @ 0.1× lr).
+  Evaluating all tasks after training task 0...
+    Task 0: 98.6% <<< THIS TASK
+
+>>> Training Task 1: Permuted MNIST (seed variant 1)
+  [Task 1] task module + router + head (full lr) + base_high (adaptive lr)
+  lr groups: base_high=1.00e-04  task=1.00e-03
+  [MCN-T1] Epoch 1: loss=0.514  acc=82.8%
+  [MCN-T1] Epoch 2: loss=0.166  acc=94.8%
+  [MCN-T1] Epoch 3: loss=0.116  acc=96.4%
+  [MCN-T1] Epoch 4: loss=0.091  acc=97.1%
+  [MCN-T1] Epoch 5: loss=0.069  acc=97.8%
+  [MCN-T1] Epoch 6: loss=0.058  acc=98.1%
+  [MCN-T1] Epoch 7: loss=0.049  acc=98.4%
+  [MCN-T1] Epoch 8: loss=0.041  acc=98.7%
+  [MCN-T1] Epoch 9: loss=0.036  acc=98.8%
+  [MCN-T1] Epoch 10: loss=0.037  acc=98.8%
+  Evaluating all tasks after training task 1...
+    Task 0: 96.9%      OLDER TASK
+    Task 1: 95.9% <<< THIS TASK
+
+>>> Training Task 2: Permuted MNIST (seed variant 2)
+  [Task 2] task module + router + head (full lr) + base_high (adaptive lr)
+  lr groups: base_high=1.00e-04  task=1.00e-03
+  [MCN-T2] Epoch 1: loss=0.538  acc=81.5%
+  [MCN-T2] Epoch 2: loss=0.167  acc=94.8%
+  [MCN-T2] Epoch 3: loss=0.113  acc=96.5%
+  [MCN-T2] Epoch 4: loss=0.083  acc=97.4%
+  [MCN-T2] Epoch 5: loss=0.065  acc=97.9%
+  [MCN-T2] Epoch 6: loss=0.050  acc=98.4%
+  [MCN-T2] Epoch 7: loss=0.043  acc=98.6%
+  [MCN-T2] Epoch 8: loss=0.036  acc=98.8%
+  [MCN-T2] Epoch 9: loss=0.033  acc=98.9%
+  [MCN-T2] Epoch 10: loss=0.030  acc=99.0%
+  Evaluating all tasks after training task 2...
+    Task 0: 99.1%      OLDER TASK
+    Task 1: 95.5%      OLDER TASK
+    Task 2: 96.5% <<< THIS TASK
+
+>>> Training Task 3: Permuted MNIST (seed variant 3)
+  [Task 3] task module + router + head (full lr) + base_high (adaptive lr)
+  lr groups: base_high=1.00e-04  task=1.00e-03
+  [MCN-T3] Epoch 1: loss=0.501  acc=83.5%
+  [MCN-T3] Epoch 2: loss=0.159  acc=95.1%
+  [MCN-T3] Epoch 3: loss=0.104  acc=96.7%
+  [MCN-T3] Epoch 4: loss=0.076  acc=97.6%
+  [MCN-T3] Epoch 5: loss=0.060  acc=98.1%
+  [MCN-T3] Epoch 6: loss=0.048  acc=98.4%
+  [MCN-T3] Epoch 7: loss=0.040  acc=98.7%
+  [MCN-T3] Epoch 8: loss=0.032  acc=98.9%
+  [MCN-T3] Epoch 9: loss=0.032  acc=98.9%
+  [MCN-T3] Epoch 10: loss=0.027  acc=99.1%
+  Evaluating all tasks after training task 3...
+    Task 0: 98.4%      OLDER TASK
+    Task 1: 95.1%      OLDER TASK
+    Task 2: 96.1%      OLDER TASK
+    Task 3: 96.5% <<< THIS TASK
+
+>>> Training Task 4: Permuted MNIST (seed variant 4)
+  [Task 4] task module + router + head (full lr) + base_high (adaptive lr)
+  lr groups: base_high=1.00e-04  task=1.00e-03
+  [MCN-T4] Epoch 1: loss=0.533  acc=82.1%
+  [MCN-T4] Epoch 2: loss=0.182  acc=94.4%
+  [MCN-T4] Epoch 3: loss=0.115  acc=96.4%
+  [MCN-T4] Epoch 4: loss=0.081  acc=97.5%
+  [MCN-T4] Epoch 5: loss=0.061  acc=98.1%
+  [MCN-T4] Epoch 6: loss=0.047  acc=98.4%
+  [MCN-T4] Epoch 7: loss=0.042  acc=98.7%
+  [MCN-T4] Epoch 8: loss=0.033  acc=98.9%
+  [MCN-T4] Epoch 9: loss=0.031  acc=99.0%
+  [MCN-T4] Epoch 10: loss=0.027  acc=99.1%
+  Evaluating all tasks after training task 4...
+    Task 0: 97.0%      OLDER TASK
+    Task 1: 94.1%      OLDER TASK
+    Task 2: 96.0%      OLDER TASK
+    Task 3: 95.9%      OLDER TASK
+    Task 4: 96.5% <<< THIS TASK
+
+--- Accuracy Matrix R[trained_up_to][task] ---
+      T0  T1  T2  T3  T4
+After T0:  98.6    ---    ---    ---    ---  
+After T1:  96.9   95.9    ---    ---    ---  
+After T2:  99.1   95.5   96.5    ---    ---  
+After T3:  98.4   95.1   96.1   96.5    ---  
+After T4:  97.0   94.1   96.0   95.9   96.5  
+
+Average Accuracy : 95.91%
+Backward Transfer: -1.13%
+Forgetting Measure: 1.24%
+
+============================================================
+FINAL COMPARISON
+============================================================
+Method          Avg Acc        BWT   Forgetting
+--------------------------------------------------
+Naive             87.5%    -12.8%       12.8%
+Ewc               96.8%     -1.0%        1.0%
+Packnet           95.4%     -3.0%        3.0%
+Mcn               95.9%     -1.1%        1.2%
+
+Avg Acc    — higher is better (accuracy after all tasks)
+BWT        — less negative is better (negative = forgetting)
+Forgetting — lower is better (drop from peak accuracy)
+
+Generating plots...
+
+[viz] Plots saved to /Users/sire_magnusss/Documents/NEW MODEL/continual-learning-arch/results/plots/
