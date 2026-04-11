@@ -38,10 +38,12 @@ from models.packnet import PackNetModel
 from models.mcn import MCN
 from models.mcn_v2 import MCNv2
 from models.mcn_ablations import MCNNoRouter, MCNNoGate, MCNBaseOnly
+from models.hat import HATModel, HATMNISTModel
 from trainers.naive_trainer import NaiveTrainer
 from trainers.ewc_trainer import EWCTrainer
 from trainers.packnet_trainer import PackNetTrainer
 from trainers.mcn_trainer import MCNTrainer
+from trainers.hat_trainer import HATTrainer
 
 
 def parse_args():
