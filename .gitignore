@@ -8,8 +8,7 @@ __pycache__/
 # Data — downloaded automatically, don't commit
 data/
 
-# Results — large files, tracked separately
-results/plots/*.png
+# Results — text logs not tracked
 results/*.txt
 
 # macOS
