@@ -153,6 +153,9 @@ def run_method(method_name: str, model, benchmark,
     if method_name == "naive":
         trainer = NaiveTrainer(model, device, lr=args.lr,
                                epochs_per_task=args.epochs)
+    elif method_name == "hat":
+        trainer = HATTrainer(model, device, lr=args.lr,
+                             epochs_per_task=args.epochs)
     elif method_name == "ewc":
         trainer = EWCTrainer(model, device, lr=args.lr,
                              epochs_per_task=args.epochs)
