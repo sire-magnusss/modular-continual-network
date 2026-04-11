@@ -59,3 +59,17 @@ METHOD: MCN
   [MCN-T2] Epoch 7: loss=0.262  acc=89.5%
   [MCN-T2] Epoch 8: loss=0.242  acc=90.2%
   [MCN-T2] Epoch 9: loss=0.233  acc=90.8%
+  [MCN-T2] Epoch 10: loss=0.231  acc=90.8%
+  Evaluating all tasks after training task 2...
+    Task 0: 96.6%      OLDER TASK
+    Task 1: 85.7%      OLDER TASK
+    Task 2: 91.3% <<< THIS TASK
+
+>>> Training Task 3: frog vs horse
+  [Task 3] task module + router + head (full lr) + base_high (adaptive lr)
+  lr groups: base_high=1.00e-04  task=1.00e-03
+  [MCN-T3] Epoch 1: loss=0.351  acc=83.9%
+  [MCN-T3] Epoch 2: loss=0.188  acc=92.7%
+  [MCN-T3] Epoch 3: loss=0.185  acc=93.1%
+  [MCN-T3] Epoch 4: loss=0.130  acc=95.3%
+  [MCN-T3] Epoch 5: loss=0.123  acc=95.1%
