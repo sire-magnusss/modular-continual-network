@@ -188,7 +188,7 @@ Developed and tested on Apple M4 MacBook using MPS (Metal Performance Shaders) a
 ```bibtex
 @misc{mcn2025,
   title   = {Modular Continual Network: Growing Capacity for Near-Zero Catastrophic Forgetting},
-  author  = {},
+  author  = {Magnus Tiiso Makgasane},
   year    = {2025},
   note    = {Preprint}
 }
