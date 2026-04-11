@@ -25,3 +25,19 @@ METHOD: MCN
   [MCN-T0] Epoch 7: loss=0.122  acc=95.5%
   [MCN-T0] Epoch 8: loss=0.120  acc=95.4%
   [MCN-T0] Epoch 9: loss=0.120  acc=95.3%
+  [MCN-T0] Epoch 10: loss=0.103  acc=96.1%
+[MCN] base_low frozen (260,928 params). base_high adaptive (2,983,936 params @ 0.1× lr).
+  Evaluating all tasks after training task 0...
+    Task 0: 97.0% <<< THIS TASK
+
+>>> Training Task 1: bird vs cat
+  [Task 1] task module + router + head (full lr) + base_high (adaptive lr)
+  lr groups: base_high=1.00e-04  task=1.00e-03
+  [MCN-T1] Epoch 1: loss=0.574  acc=70.3%
+  [MCN-T1] Epoch 2: loss=0.492  acc=76.7%
+  [MCN-T1] Epoch 3: loss=0.461  acc=78.6%
+  [MCN-T1] Epoch 4: loss=0.416  acc=81.2%
+  [MCN-T1] Epoch 5: loss=0.384  acc=83.2%
+  [MCN-T1] Epoch 6: loss=0.363  acc=84.0%
+  [MCN-T1] Epoch 7: loss=0.347  acc=84.8%
+  [MCN-T1] Epoch 8: loss=0.338  acc=85.4%
