@@ -73,3 +73,60 @@ METHOD: MCN
   [MCN-T3] Epoch 3: loss=0.185  acc=93.1%
   [MCN-T3] Epoch 4: loss=0.130  acc=95.3%
   [MCN-T3] Epoch 5: loss=0.123  acc=95.1%
+  [MCN-T3] Epoch 6: loss=0.137  acc=94.6%
+  [MCN-T3] Epoch 7: loss=0.111  acc=95.8%
+  [MCN-T3] Epoch 8: loss=0.111  acc=95.8%
+  [MCN-T3] Epoch 9: loss=0.106  acc=96.0%
+  [MCN-T3] Epoch 10: loss=0.088  acc=96.7%
+  Evaluating all tasks after training task 3...
+    Task 0: 96.7%      OLDER TASK
+    Task 1: 85.9%      OLDER TASK
+    Task 2: 90.8%      OLDER TASK
+    Task 3: 96.8% <<< THIS TASK
+
+>>> Training Task 4: ship vs truck
+  [Task 4] task module + router + head (full lr) + base_high (adaptive lr)
+  lr groups: base_high=1.00e-04  task=1.00e-03
+  [MCN-T4] Epoch 1: loss=0.411  acc=81.3%
+  [MCN-T4] Epoch 2: loss=0.250  acc=90.1%
+  [MCN-T4] Epoch 3: loss=0.236  acc=90.6%
+  [MCN-T4] Epoch 4: loss=0.189  acc=92.5%
+  [MCN-T4] Epoch 5: loss=0.168  acc=93.6%
+  [MCN-T4] Epoch 6: loss=0.163  acc=93.5%
+  [MCN-T4] Epoch 7: loss=0.153  acc=94.1%
+  [MCN-T4] Epoch 8: loss=0.153  acc=94.2%
+  [MCN-T4] Epoch 9: loss=0.136  acc=94.8%
+  [MCN-T4] Epoch 10: loss=0.134  acc=95.0%
+  Evaluating all tasks after training task 4...
+    Task 0: 96.7%      OLDER TASK
+    Task 1: 85.5%      OLDER TASK
+    Task 2: 90.2%      OLDER TASK
+    Task 3: 96.5%      OLDER TASK
+    Task 4: 96.2% <<< THIS TASK
+
+--- Accuracy Matrix R[trained_up_to][task] ---
+      T0  T1  T2  T3  T4
+After T0:  97.0    ---    ---    ---    ---  
+After T1:  96.7   86.4    ---    ---    ---  
+After T2:  96.6   85.7   91.3    ---    ---  
+After T3:  96.7   85.9   90.8   96.8    ---  
+After T4:  96.7   85.5   90.2   96.5   96.2  
+
+Average Accuracy : 93.00%
+Backward Transfer: -0.65%
+Forgetting Measure: 0.65%
+
+============================================================
+FINAL COMPARISON
+============================================================
+Method          Avg Acc        BWT   Forgetting
+--------------------------------------------------
+Mcn               93.0%     -0.6%        0.6%
+
+Avg Acc    — higher is better (accuracy after all tasks)
+BWT        — less negative is better (negative = forgetting)
+Forgetting — lower is better (drop from peak accuracy)
+
+Generating plots...
+
+[viz] Plots saved to /Users/sire_magnusss/Documents/NEW MODEL/continual-learning-arch/results/plots/

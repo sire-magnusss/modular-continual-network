@@ -21,3 +21,7 @@ METHOD: MCN
   [MCN-T0] Epoch 3: loss=0.033  acc=99.0%
   [MCN-T0] Epoch 4: loss=0.028  acc=99.2%
   [MCN-T0] Epoch 5: loss=0.023  acc=99.3%
+  [MCN-T0] Epoch 6: loss=0.018  acc=99.5%
+  [MCN-T0] Epoch 7: loss=0.019  acc=99.5%
+  [MCN-T0] Epoch 8: loss=0.017  acc=99.5%
+  [MCN-T0] Epoch 9: loss=0.016  acc=99.5%
