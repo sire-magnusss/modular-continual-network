@@ -1,0 +1,13 @@
+[device] Using MPS (Apple Silicon GPU)
+
+Benchmark : CIFAR10
+Methods   : naive, ewc, packnet, mcn
+Epochs    : 10 per task
+Device    : mps
+Tasks     : 5
+
+============================================================
+METHOD: Naive (no forgetting prevention)
+============================================================
+
+>>> Training Task 0: airplane vs automobile

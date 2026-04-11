@@ -1,0 +1,14 @@
+[device] Using MPS (Apple Silicon GPU)
+
+Benchmark : MNIST
+Methods   : naive, ewc, packnet, mcn
+Epochs    : 10 per task
+Device    : mps
+Tasks     : 5
+
+============================================================
+METHOD: Naive (no forgetting prevention)
+============================================================
+
+>>> Training Task 0: Original MNIST
+  [Naive] Task 0 Epoch 1: loss=0.230  acc=93.0%

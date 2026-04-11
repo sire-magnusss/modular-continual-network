@@ -99,15 +99,19 @@ def build_model(benchmark_type: str, num_tasks: int, method: str,
     sz    = 32 if benchmark_type == "cifar10" else 28
     n_cls = 2  if benchmark_type == "cifar10" else 10
 
+    # CIFAR-10: structurally diverse tasks — full base freeze wins
+    # MNIST: permuted inputs — adaptive high-level freeze helps
+    adaptive = (benchmark_type == "mnist")
+
     if method == "mcn":
         return MCN(num_tasks=num_tasks, num_classes_per_task=n_cls,
-                   in_channels=in_ch, input_size=sz)
+                   in_channels=in_ch, input_size=sz, freeze_all=not adaptive)
     elif method == "mcn_no_router":
         return MCNNoRouter(num_tasks=num_tasks, num_classes_per_task=n_cls,
-                           in_channels=in_ch, input_size=sz)
+                           in_channels=in_ch, input_size=sz, freeze_all=not adaptive)
     elif method == "mcn_no_gate":
         return MCNNoGate(num_tasks=num_tasks, num_classes_per_task=n_cls,
-                         in_channels=in_ch, input_size=sz)
+                         in_channels=in_ch, input_size=sz, freeze_all=not adaptive)
     elif method == "mcn_base_only":
         return MCNBaseOnly(num_tasks=num_tasks, num_classes_per_task=n_cls,
                            base_dim=512, in_channels=in_ch, input_size=sz)

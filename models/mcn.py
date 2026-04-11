@@ -220,7 +220,8 @@ class MCN(nn.Module):
     def __init__(self, num_tasks: int, num_classes_per_task: int,
                  base_dim: int = 512, task_dim: int = 256,
                  in_channels: int = 3, input_size: int = 32,
-                 adaptive_lr_scale: float = 0.1):
+                 adaptive_lr_scale: float = 0.1,
+                 freeze_all: bool = False):
         super().__init__()
 
         self.num_tasks = num_tasks
@@ -230,6 +231,7 @@ class MCN(nn.Module):
         self.in_channels = in_channels
         self.input_size = input_size
         self.adaptive_lr_scale = adaptive_lr_scale
+        self.freeze_all = freeze_all  # if True: freeze entire base after T0 (original behaviour)
 
         pooled = input_size // 8  # after 3 maxpools: 32→4, 28→3
 
@@ -300,16 +302,24 @@ class MCN(nn.Module):
     def freeze_base_encoder(self):
         """
         After Task 0:
-          - Permanently freeze base_low (edges/textures — universal).
-          - Leave base_high requires_grad=True so it can adapt at low lr.
+          freeze_all=True  → freeze entire base encoder (best for diverse tasks like CIFAR-10).
+          freeze_all=False → freeze only base_low; base_high trains at adaptive_lr_scale × lr
+                             (helps when tasks share structure but differ in high-level layout).
         """
         for param in self.base_low.parameters():
             param.requires_grad = False
+        if self.freeze_all:
+            for param in self.base_high.parameters():
+                param.requires_grad = False
         self._base_frozen = True
-        low_params  = sum(p.numel() for p in self.base_low.parameters())
-        high_params = sum(p.numel() for p in self.base_high.parameters())
-        print(f"[MCN] base_low frozen ({low_params:,} params). "
-              f"base_high adaptive ({high_params:,} params @ {self.adaptive_lr_scale}× lr).")
+        low_p  = sum(p.numel() for p in self.base_low.parameters())
+        high_p = sum(p.numel() for p in self.base_high.parameters())
+        if self.freeze_all:
+            print(f"[MCN] Full base frozen ({low_p+high_p:,} params). "
+                  f"Task modules get full plasticity.")
+        else:
+            print(f"[MCN] base_low frozen ({low_p:,} params). "
+                  f"base_high adaptive ({high_p:,} params @ {self.adaptive_lr_scale}× lr).")
 
     def get_task_param_groups(self, task_id: int, base_lr: float) -> list:
         """
@@ -321,22 +331,22 @@ class MCN(nn.Module):
           - task module + router + head at base_lr     (full speed)
         """
         if not self._base_frozen:
-            return [{"params": list(self.parameters()), "lr": base_lr}]
+            return [{"params": list(self.parameters()), "lr": base_lr, "name": "all"}]
 
-        return [
-            {
-                "params": list(self.base_high.parameters()),
-                "lr": base_lr * self.adaptive_lr_scale,
-                "name": "base_high",
-            },
-            {
-                "params": (list(self.task_modules[task_id].parameters()) +
-                           list(self.routers[task_id].parameters()) +
-                           list(self.heads[task_id].parameters())),
-                "lr": base_lr,
-                "name": "task_specific",
-            },
-        ]
+        task_params = (list(self.task_modules[task_id].parameters()) +
+                       list(self.routers[task_id].parameters()) +
+                       list(self.heads[task_id].parameters()))
+
+        if self.freeze_all:
+            # base fully frozen — only task-specific params
+            return [{"params": task_params, "lr": base_lr, "name": "task_specific"}]
+        else:
+            # adaptive: base_high at slow lr, task components at full lr
+            return [
+                {"params": list(self.base_high.parameters()),
+                 "lr": base_lr * self.adaptive_lr_scale, "name": "base_high"},
+                {"params": task_params, "lr": base_lr, "name": "task_specific"},
+            ]
 
     # Keep backward-compatible alias used by ablation variants
     def get_task_parameters(self, task_id: int):
