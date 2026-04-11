@@ -42,3 +42,11 @@ METHOD: MCN
   [MCN-T1] Epoch 7: loss=0.347  acc=84.8%
   [MCN-T1] Epoch 8: loss=0.338  acc=85.4%
   [MCN-T1] Epoch 9: loss=0.319  acc=86.2%
+  [MCN-T1] Epoch 10: loss=0.311  acc=87.1%
+  Evaluating all tasks after training task 1...
+    Task 0: 96.7%      OLDER TASK
+    Task 1: 86.4% <<< THIS TASK
+
+>>> Training Task 2: deer vs dog
+  [Task 2] task module + router + head (full lr) + base_high (adaptive lr)
+  lr groups: base_high=1.00e-04  task=1.00e-03
