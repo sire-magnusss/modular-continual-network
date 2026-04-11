@@ -134,7 +134,7 @@ python main.py --methods mcn mcn_no_router mcn_no_gate mcn_base_only --tasks 3 -
 ## Project Structure
 
 ```
-continual-learning-arch/
+modular-continual-network/
 ├── benchmarks/
 │   ├── split_cifar10.py        5-task CIFAR-10
 │   ├── split_cifar100.py       20-task CIFAR-100
