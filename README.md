@@ -4,15 +4,21 @@ A novel neural network architecture for continual learning that achieves near-ze
 
 ## Key Results
 
-| Method   | Split-CIFAR-10 (5 tasks) | Split-CIFAR-100 (20 tasks) | Permuted MNIST (5 tasks) |
-|----------|:------------------------:|:--------------------------:|:------------------------:|
-|          | Avg Acc / Forgetting     | Avg Acc / Forgetting       | Avg Acc / Forgetting     |
-| Naive    | 50.7% / 55.6%            | —                          | 87.5% / 12.8%            |
-| EWC      | 60.8% / 39.2%            | —                          | 96.8% / 1.0%             |
-| PackNet  | 77.0% / 9.3%             | —                          | 95.4% / 3.0%             |
-| **MCN**  | **92.7% / 0.1%**         | **— / —**                  | **95.9% / 1.2%**         |
+| Method      | Split-CIFAR-10 (5 tasks) | Split-CIFAR-100 (20 tasks) | Permuted MNIST (5 tasks) |
+|-------------|:------------------------:|:--------------------------:|:------------------------:|
+|             | Avg Acc / Forgetting     | Avg Acc / Forgetting       | Avg Acc / Forgetting     |
+| Naive       | 50.7% / 55.6%            | 23.8% / 64.4%              | 87.5% / 12.8%            |
+| EWC         | 60.8% / 39.2%            | 66.0% / 11.3%              | 96.8% / 1.0%             |
+| PackNet     | 77.0% / 9.3%             | 56.2% / 4.5%               | 95.4% / 3.0%             |
+| HAT         | 59.4% / 43.7%            | —                          | —                        |
+| **MCN**     | **92.7% / 0.1%**         | **75.1% / 1.5%**           | **95.9% / 1.2%**         |
 
-> Split-CIFAR-100 results update as experiments complete.
+### Plots
+
+| Split-CIFAR-10 | Split-CIFAR-100 | Permuted MNIST |
+|:-:|:-:|:-:|
+| ![cifar10 matrix](results/plots/SplitCIFAR10_accuracy_matrix.png) | ![cifar100 matrix](results/plots/SplitCIFAR100_accuracy_matrix.png) | ![mnist matrix](results/plots/PermutedMNIST_accuracy_matrix.png) |
+| ![cifar10 summary](results/plots/SplitCIFAR10_summary.png) | ![cifar100 summary](results/plots/SplitCIFAR100_summary.png) | ![mnist summary](results/plots/PermutedMNIST_summary.png) |
 
 ## Architecture
 

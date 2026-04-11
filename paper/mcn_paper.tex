@@ -217,6 +217,7 @@ Method & Avg Acc$\uparrow$ & BWT$\uparrow$ & Forgetting$\downarrow$ \\
 \midrule
 Naive         & 50.7\%  & $-$55.6\%  & 55.6\% \\
 EWC           & 60.8\%  & $-$39.2\%  & 39.2\% \\
+HAT           & 59.4\%  & $-$43.7\%  & 43.7\% \\
 PackNet       & 77.0\%  & $-$9.3\%   & 9.3\%  \\
 \textbf{MCN}  & \textbf{92.7\%} & \textbf{$-$0.1\%} & \textbf{0.1\%} \\
 \bottomrule
@@ -246,17 +247,17 @@ On Permuted MNIST, EWC achieves the best results overall. This is an honest find
 
 \begin{table}[h]
 \centering
-\caption{Split-CIFAR-100 (20 tasks). Results updating as experiments complete.}
+\caption{Split-CIFAR-100 (20 tasks). The hardest benchmark: 4$\times$ more tasks than CIFAR-10, finer-grained classes, less data per task. MCN maintains strong performance at scale.}
 \label{tab:cifar100}
 \small
 \begin{tabular}{lccc}
 \toprule
 Method & Avg Acc$\uparrow$ & BWT$\uparrow$ & Forgetting$\downarrow$ \\
 \midrule
-Naive     & TBD & TBD & TBD \\
-EWC       & TBD & TBD & TBD \\
-PackNet   & TBD & TBD & TBD \\
-MCN       & TBD & TBD & TBD \\
+Naive         & 23.8\%  & $-$64.4\%  & 64.4\% \\
+PackNet       & 56.2\%  & $-$3.3\%   & 4.5\%  \\
+EWC           & 66.0\%  & $-$11.2\%  & 11.3\% \\
+\textbf{MCN}  & \textbf{75.1\%} & \textbf{$-$1.1\%} & \textbf{1.5\%} \\
 \bottomrule
 \end{tabular}
 \end{table}

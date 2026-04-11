@@ -163,6 +163,7 @@ All models trained with Adam optimizer (lr = 1e-3), batch size 128. MCN uses E =
 |-------------|:-------:|:--------:|:----------:|
 | Naive       | 50.7%   | -55.6%   | 55.6%      |
 | EWC         | 60.8%   | -39.2%   | 39.2%      |
+| HAT         | 59.4%   | -43.7%   | 43.7%      |
 | PackNet     | 77.0%   | -9.3%    | 9.3%       |
 | **MCN**     | **92.7%**| **-0.1%**| **0.1%**  |
 
@@ -179,7 +180,18 @@ MCN surpasses all baselines by a wide margin. Naive collapses to near-chance acc
 
 On Permuted MNIST, EWC achieves the best forgetting (1.0%) while MCN is close at 1.2%. This is an honest finding: for structurally homogeneous tasks (all inputs are permuted MNIST digits, same distribution family), EWC's soft regularization is sufficient to prevent catastrophic forgetting. MCN's modular approach provides less advantage when tasks are nearly identical in low-level structure. MCN matches EWC on average accuracy (95.9% vs 96.8%) — competitive but not dominant. The MCN advantage is clearest when tasks are visually diverse (CIFAR).
 
-**Split-CIFAR-100 (20 tasks):** *(results updating as experiment completes)*
+**Split-CIFAR-100 (20 tasks):**
+
+| Method      | Avg Acc | BWT      | Forgetting |
+|-------------|:-------:|:--------:|:----------:|
+| Naive       | 23.8%   | -64.4%   | 64.4%      |
+| PackNet     | 56.2%   | -3.3%    | 4.5%       |
+| EWC         | 66.0%   | -11.2%   | 11.3%      |
+| **MCN**     | **75.1%**| **-1.1%**| **1.5%**  |
+
+At 20 tasks, the scaling story is clear: Naive collapses to 23.8% (catastrophic forgetting compounds with each task). PackNet exhausts its free weight budget early, learning later tasks poorly despite low forgetting. EWC accumulates 20 sets of conflicting Fisher constraints, pushing accuracy down to 66.0% with 11.3% forgetting. MCN maintains 75.1% accuracy with only 1.5% forgetting — the modular architecture scales linearly with no capacity limit.
+
+Notably, PackNet's ordering flips vs. CIFAR-10: it beats EWC on forgetting (4.5% vs 11.3%) but loses on accuracy (56.2% vs 66.0%). With 20 tasks, PackNet simply cannot learn the last several tasks effectively — free capacity is nearly exhausted. EWC can still learn new tasks (it never runs out of parameters) but forgets more due to compounding constraints.
 
 ---
 
