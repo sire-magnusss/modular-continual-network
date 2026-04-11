@@ -55,3 +55,78 @@ METHOD: MCN
   [MCN-T2] Epoch 3: loss=0.108  acc=96.6%
   [MCN-T2] Epoch 4: loss=0.078  acc=97.5%
   [MCN-T2] Epoch 5: loss=0.062  acc=98.0%
+  [MCN-T2] Epoch 6: loss=0.048  acc=98.4%
+  [MCN-T2] Epoch 7: loss=0.047  acc=98.4%
+  [MCN-T2] Epoch 8: loss=0.037  acc=98.8%
+  [MCN-T2] Epoch 9: loss=0.033  acc=98.9%
+  [MCN-T2] Epoch 10: loss=0.027  acc=99.1%
+  Evaluating all tasks after training task 2...
+    Task 0: 96.8%      OLDER TASK
+    Task 1: 96.2%      OLDER TASK
+    Task 2: 96.7% <<< THIS TASK
+
+>>> Training Task 3: Permuted MNIST (seed variant 3)
+  [Task 3] task module + router + head (full lr) + base_high (adaptive lr)
+  lr groups: base_high=1.00e-04  task=1.00e-03
+  [MCN-T3] Epoch 1: loss=0.505  acc=83.2%
+  [MCN-T3] Epoch 2: loss=0.159  acc=95.0%
+  [MCN-T3] Epoch 3: loss=0.106  acc=96.7%
+  [MCN-T3] Epoch 4: loss=0.078  acc=97.6%
+  [MCN-T3] Epoch 5: loss=0.060  acc=98.1%
+  [MCN-T3] Epoch 6: loss=0.049  acc=98.4%
+  [MCN-T3] Epoch 7: loss=0.038  acc=98.8%
+  [MCN-T3] Epoch 8: loss=0.035  acc=98.8%
+  [MCN-T3] Epoch 9: loss=0.031  acc=99.0%
+  [MCN-T3] Epoch 10: loss=0.027  acc=99.1%
+  Evaluating all tasks after training task 3...
+    Task 0: 94.3%      OLDER TASK
+    Task 1: 95.8%      OLDER TASK
+    Task 2: 96.2%      OLDER TASK
+    Task 3: 94.9% <<< THIS TASK
+
+>>> Training Task 4: Permuted MNIST (seed variant 4)
+  [Task 4] task module + router + head (full lr) + base_high (adaptive lr)
+  lr groups: base_high=1.00e-04  task=1.00e-03
+  [MCN-T4] Epoch 1: loss=0.518  acc=83.0%
+  [MCN-T4] Epoch 2: loss=0.195  acc=93.8%
+  [MCN-T4] Epoch 3: loss=0.125  acc=96.1%
+  [MCN-T4] Epoch 4: loss=0.090  acc=97.2%
+  [MCN-T4] Epoch 5: loss=0.067  acc=97.8%
+  [MCN-T4] Epoch 6: loss=0.053  acc=98.3%
+  [MCN-T4] Epoch 7: loss=0.040  acc=98.7%
+  [MCN-T4] Epoch 8: loss=0.036  acc=98.8%
+  [MCN-T4] Epoch 9: loss=0.031  acc=99.0%
+  [MCN-T4] Epoch 10: loss=0.026  acc=99.1%
+  Evaluating all tasks after training task 4...
+    Task 0: 87.3%      OLDER TASK
+    Task 1: 95.2%      OLDER TASK
+    Task 2: 96.1%      OLDER TASK
+    Task 3: 92.5%      OLDER TASK
+    Task 4: 96.6% <<< THIS TASK
+
+--- Accuracy Matrix R[trained_up_to][task] ---
+      T0  T1  T2  T3  T4
+After T0:  99.3    ---    ---    ---    ---  
+After T1:  98.4   96.5    ---    ---    ---  
+After T2:  96.8   96.2   96.7    ---    ---  
+After T3:  94.3   95.8   96.2   94.9    ---  
+After T4:  87.3   95.2   96.1   92.5   96.6  
+
+Average Accuracy : 93.55%
+Backward Transfer: -4.05%
+Forgetting Measure: 4.05%
+
+============================================================
+FINAL COMPARISON
+============================================================
+Method          Avg Acc        BWT   Forgetting
+--------------------------------------------------
+Mcn               93.5%     -4.0%        4.0%
+
+Avg Acc    — higher is better (accuracy after all tasks)
+BWT        — less negative is better (negative = forgetting)
+Forgetting — lower is better (drop from peak accuracy)
+
+Generating plots...
+
+[viz] Plots saved to /Users/sire_magnusss/Documents/NEW MODEL/continual-learning-arch/results/plots/
