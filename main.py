@@ -110,7 +110,7 @@ def build_model(benchmark_type: str, num_tasks: int, method: str,
         return PackNetModel(backbone, prune_fraction=packnet_prune)
 
 
-def run_method(method_name: str, model, benchmark, benchmark_type: str,
+def run_method(method_name: str, model, benchmark,
                device: torch.device, args) -> MetricTracker:
     tracker = MetricTracker(benchmark.num_tasks)
 
@@ -169,8 +169,7 @@ def main():
             ewc_lambda=args.ewc_lambda,
             packnet_prune=args.packnet_prune
         )
-        tracker = run_method(method_name, model, benchmark, benchmark_type,
-                             device, args)
+        tracker = run_method(method_name, model, benchmark, device, args)
         results[method_name.capitalize()] = tracker
 
     print_final_comparison(results)
