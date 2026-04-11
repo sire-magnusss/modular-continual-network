@@ -52,7 +52,7 @@ def parse_args():
                         default="cifar10",
                         help="Which benchmark to run (default: cifar10)")
     parser.add_argument("--methods", nargs="+",
-                        choices=["naive", "ewc", "packnet", "mcn", "mcn_v2",
+                        choices=["naive", "ewc", "packnet", "hat", "mcn", "mcn_v2",
                                  "mcn_no_router", "mcn_no_gate", "mcn_base_only"],
                         default=["naive", "ewc", "packnet", "mcn"],
                         help="Which methods to run (default: all)")
@@ -107,6 +107,15 @@ def build_model(benchmark_type: str, num_tasks: int, method: str,
     # CIFAR (diverse object classes): full base freeze wins
     # MNIST (permuted, same structure): adaptive high-level freeze helps
     adaptive = (benchmark_type == "mnist")
+
+    if method == "hat":
+        if benchmark_type == "mnist":
+            return HATMNISTModel(num_tasks=num_tasks,
+                                 num_classes_per_task=n_cls)
+        else:
+            return HATModel(num_tasks=num_tasks,
+                            num_classes_per_task=n_cls,
+                            in_channels=in_ch, input_size=sz)
 
     if method == "mcn":
         return MCN(num_tasks=num_tasks, num_classes_per_task=n_cls,
