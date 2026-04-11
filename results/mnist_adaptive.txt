@@ -17,3 +17,5 @@ METHOD: MCN
 >>> Training Task 0: Original MNIST
   [Task 0] Training full network
   [MCN-T0] Epoch 1: loss=0.138  acc=95.7%
+  [MCN-T0] Epoch 2: loss=0.045  acc=98.7%
+  [MCN-T0] Epoch 3: loss=0.033  acc=99.0%
