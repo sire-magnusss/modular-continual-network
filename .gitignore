@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+*.egg-info/
+
+# Data — downloaded automatically, don't commit
+data/
+
+# Results — large files, tracked separately
+results/plots/*.png
+results/*.txt
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
