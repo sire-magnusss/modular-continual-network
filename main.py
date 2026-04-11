@@ -31,7 +31,7 @@ from utils.device import get_device
 from utils.metrics import MetricTracker
 from utils.visualization import plot_results
 
-from benchmarks import SplitCIFAR10, PermutedMNIST
+from benchmarks import SplitCIFAR10, PermutedMNIST, SplitCIFAR100
 from models.backbone import CIFARBackbone, MNISTBackbone
 from models.ewc import EWCModel
 from models.packnet import PackNetModel
@@ -45,7 +45,7 @@ from trainers.mcn_trainer import MCNTrainer
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Continual Learning Baselines")
-    parser.add_argument("--benchmark", choices=["cifar10", "mnist"],
+    parser.add_argument("--benchmark", choices=["cifar10", "cifar100", "mnist"],
                         default="cifar10",
                         help="Which benchmark to run (default: cifar10)")
     parser.add_argument("--methods", nargs="+",
@@ -74,33 +74,35 @@ def parse_args():
 
 def build_benchmark(args):
     if args.benchmark == "cifar10":
-        benchmark = SplitCIFAR10(
-            data_dir=args.data_dir,
-            batch_size=args.batch_size
-        )
+        benchmark = SplitCIFAR10(data_dir=args.data_dir, batch_size=args.batch_size)
         if args.tasks:
             benchmark.num_tasks = min(args.tasks, 5)
             benchmark.name = f"SplitCIFAR10_{benchmark.num_tasks}tasks"
         return benchmark, "cifar10"
 
+    elif args.benchmark == "cifar100":
+        benchmark = SplitCIFAR100(data_dir=args.data_dir, batch_size=args.batch_size)
+        if args.tasks:
+            benchmark.num_tasks = min(args.tasks, 20)
+            benchmark.name = f"SplitCIFAR100_{benchmark.num_tasks}tasks"
+        return benchmark, "cifar100"
+
     else:  # mnist
         num_tasks = args.tasks or 5
         benchmark = PermutedMNIST(
-            num_tasks=num_tasks,
-            data_dir=args.data_dir,
-            batch_size=args.batch_size
+            num_tasks=num_tasks, data_dir=args.data_dir, batch_size=args.batch_size
         )
         return benchmark, "mnist"
 
 
 def build_model(benchmark_type: str, num_tasks: int, method: str,
                 ewc_lambda: float, packnet_prune: float):
-    in_ch = 3 if benchmark_type == "cifar10" else 1
-    sz    = 32 if benchmark_type == "cifar10" else 28
-    n_cls = 2  if benchmark_type == "cifar10" else 10
+    in_ch = 1 if benchmark_type == "mnist" else 3
+    sz    = 28 if benchmark_type == "mnist" else 32
+    n_cls = {"cifar10": 2, "cifar100": 5, "mnist": 10}[benchmark_type]
 
-    # CIFAR-10: structurally diverse tasks — full base freeze wins
-    # MNIST: permuted inputs — adaptive high-level freeze helps
+    # CIFAR (diverse object classes): full base freeze wins
+    # MNIST (permuted, same structure): adaptive high-level freeze helps
     adaptive = (benchmark_type == "mnist")
 
     if method == "mcn":
@@ -116,10 +118,10 @@ def build_model(benchmark_type: str, num_tasks: int, method: str,
         return MCNBaseOnly(num_tasks=num_tasks, num_classes_per_task=n_cls,
                            base_dim=512, in_channels=in_ch, input_size=sz)
 
-    if benchmark_type == "cifar10":
-        backbone = CIFARBackbone(num_tasks=num_tasks, num_classes_per_task=2)
-    else:
-        backbone = MNISTBackbone(num_tasks=num_tasks, num_classes_per_task=10)
+    if benchmark_type == "mnist":
+        backbone = MNISTBackbone(num_tasks=num_tasks, num_classes_per_task=n_cls)
+    else:  # cifar10 or cifar100
+        backbone = CIFARBackbone(num_tasks=num_tasks, num_classes_per_task=n_cls)
 
     if method == "naive":
         return backbone
