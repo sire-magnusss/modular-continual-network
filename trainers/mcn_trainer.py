@@ -112,8 +112,12 @@ class MCNTrainer:
                       f"@ {getattr(self.model,'adaptive_lr_scale',1.0)}× lr")
             else:
                 print(f"  Base encoder params  : {counts['base_encoder']:,}")
+            extra = ""
+            if "per_task_cross_attn" in counts:
+                extra = f", cross_attn={counts['per_task_cross_attn']:,}"
             print(f"  Per-task params      : {counts['per_task_total']:,} "
-                  f"(module={counts['per_task_module']:,}, "
+                  f"(module={counts['per_task_module']:,}"
+                  f"{extra}, "
                   f"router={counts['per_task_router']:,}, "
                   f"head={counts['per_task_head']:,})")
             print(f"  Total ({benchmark.num_tasks} tasks)     : {counts['total_for_n_tasks']:,}")

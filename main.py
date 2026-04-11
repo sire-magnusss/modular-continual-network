@@ -36,6 +36,7 @@ from models.backbone import CIFARBackbone, MNISTBackbone
 from models.ewc import EWCModel
 from models.packnet import PackNetModel
 from models.mcn import MCN
+from models.mcn_v2 import MCNv2
 from models.mcn_ablations import MCNNoRouter, MCNNoGate, MCNBaseOnly
 from trainers.naive_trainer import NaiveTrainer
 from trainers.ewc_trainer import EWCTrainer
@@ -49,7 +50,7 @@ def parse_args():
                         default="cifar10",
                         help="Which benchmark to run (default: cifar10)")
     parser.add_argument("--methods", nargs="+",
-                        choices=["naive", "ewc", "packnet", "mcn",
+                        choices=["naive", "ewc", "packnet", "mcn", "mcn_v2",
                                  "mcn_no_router", "mcn_no_gate", "mcn_base_only"],
                         default=["naive", "ewc", "packnet", "mcn"],
                         help="Which methods to run (default: all)")
@@ -108,6 +109,9 @@ def build_model(benchmark_type: str, num_tasks: int, method: str,
     if method == "mcn":
         return MCN(num_tasks=num_tasks, num_classes_per_task=n_cls,
                    in_channels=in_ch, input_size=sz, freeze_all=not adaptive)
+    elif method == "mcn_v2":
+        return MCNv2(num_tasks=num_tasks, num_classes_per_task=n_cls,
+                     in_channels=in_ch, input_size=sz, freeze_all=not adaptive)
     elif method == "mcn_no_router":
         return MCNNoRouter(num_tasks=num_tasks, num_classes_per_task=n_cls,
                            in_channels=in_ch, input_size=sz, freeze_all=not adaptive)
@@ -145,7 +149,7 @@ def run_method(method_name: str, model, benchmark,
         trainer = PackNetTrainer(model, device, lr=args.lr,
                                  epochs_phase1=args.epochs,
                                  epochs_phase2=max(1, args.epochs // 3))
-    elif method_name in ("mcn", "mcn_no_router", "mcn_no_gate", "mcn_base_only"):
+    elif method_name in ("mcn", "mcn_v2", "mcn_no_router", "mcn_no_gate", "mcn_base_only"):
         trainer = MCNTrainer(model, device, lr=args.lr,
                              epochs_per_task=args.epochs)
 
