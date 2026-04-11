@@ -66,7 +66,7 @@ Research question this tests:
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 
 # ─── Task Module ─────────────────────────────────────────────────────────────
@@ -292,6 +292,7 @@ class MCN(nn.Module):
         ])
 
         self._base_frozen = False
+        self._num_trained = 0   # updated by MCNTrainer after each task
 
     def forward(self, x: torch.Tensor, task_id: int) -> torch.Tensor:
         base_feat = self.base_high(self.base_low(x))
@@ -356,6 +357,51 @@ class MCN(nn.Module):
                 list(self.task_modules[task_id].parameters()) +
                 list(self.routers[task_id].parameters()) +
                 list(self.heads[task_id].parameters()))
+
+    @torch.no_grad()
+    def predict_task_free(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Task-free inference: predict class label without knowing the task ID.
+
+        Runs forward pass through all trained task heads and picks the task
+        whose predictions have the LOWEST Shannon entropy (highest confidence).
+        Returns per-sample (predicted_label, predicted_task_id).
+
+        Complexity: O(T) forward passes — acceptable at inference time.
+        Accuracy depends on task separation: if two tasks have similar inputs
+        (like MNIST digits across permutations), entropy discrimination degrades.
+        For visually distinct tasks (CIFAR), entropy reliably picks the right task.
+
+        This moves MCN from task-incremental (task ID known at test time) toward
+        class-incremental evaluation — a harder, more realistic setting.
+        """
+        self.eval()
+        if self._num_trained == 0:
+            raise RuntimeError("No tasks have been trained yet.")
+
+        all_logits: List[torch.Tensor] = []
+        all_entropies: List[torch.Tensor] = []
+
+        for t in range(self._num_trained):
+            logits = self.forward(x, task_id=t)      # (B, C_t)
+            probs = F.softmax(logits, dim=1)          # (B, C_t)
+            # Shannon entropy per sample
+            entropy = -(probs * (probs + 1e-8).log()).sum(dim=1)  # (B,)
+            all_logits.append(logits)
+            all_entropies.append(entropy)
+
+        # Stack: (B, T) — pick task with minimum entropy (maximum confidence)
+        entropies = torch.stack(all_entropies, dim=1)   # (B, T)
+        best_task_ids = entropies.argmin(dim=1)          # (B,)
+
+        # Gather the predicted class for each sample from the chosen task
+        B = x.size(0)
+        predicted_labels = torch.stack([
+            all_logits[best_task_ids[i].item()][i].argmax()
+            for i in range(B)
+        ])
+
+        return predicted_labels, best_task_ids
 
     def get_base_embedding(self, x: torch.Tensor) -> torch.Tensor:
         with torch.no_grad():

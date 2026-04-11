@@ -60,7 +60,7 @@ Why this doesn't cause forgetting:
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 
 # ─── Shared building blocks (same as MCN v1) ─────────────────────────────────
@@ -317,6 +317,7 @@ class MCNv2(nn.Module):
         ])
 
         self._base_frozen = False
+        self._num_trained = 0
 
     def forward(self, x: torch.Tensor, task_id: int) -> torch.Tensor:
         # Base features (frozen after task 0)
@@ -411,6 +412,29 @@ class MCNv2(nn.Module):
             list(self.routers[task_id].parameters()) +
             list(self.heads[task_id].parameters())
         )
+
+    @torch.no_grad()
+    def predict_task_free(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Task-free inference via minimum entropy — same as MCN v1."""
+        self.eval()
+        if self._num_trained == 0:
+            raise RuntimeError("No tasks have been trained yet.")
+        all_logits: List[torch.Tensor] = []
+        all_entropies: List[torch.Tensor] = []
+        for t in range(self._num_trained):
+            logits = self.forward(x, task_id=t)
+            probs = F.softmax(logits, dim=1)
+            entropy = -(probs * (probs + 1e-8).log()).sum(dim=1)
+            all_logits.append(logits)
+            all_entropies.append(entropy)
+        entropies = torch.stack(all_entropies, dim=1)
+        best_task_ids = entropies.argmin(dim=1)
+        B = x.size(0)
+        predicted_labels = torch.stack([
+            all_logits[best_task_ids[i].item()][i].argmax()
+            for i in range(B)
+        ])
+        return predicted_labels, best_task_ids
 
     def param_count(self) -> dict:
         def count(m): return sum(p.numel() for p in m.parameters())
