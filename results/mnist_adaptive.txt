@@ -37,3 +37,21 @@ METHOD: MCN
   [MCN-T1] Epoch 2: loss=0.185  acc=94.4%
   [MCN-T1] Epoch 3: loss=0.121  acc=96.3%
   [MCN-T1] Epoch 4: loss=0.090  acc=97.1%
+  [MCN-T1] Epoch 5: loss=0.070  acc=97.9%
+  [MCN-T1] Epoch 6: loss=0.056  acc=98.2%
+  [MCN-T1] Epoch 7: loss=0.047  acc=98.5%
+  [MCN-T1] Epoch 8: loss=0.041  acc=98.7%
+  [MCN-T1] Epoch 9: loss=0.038  acc=98.8%
+  [MCN-T1] Epoch 10: loss=0.033  acc=99.0%
+  Evaluating all tasks after training task 1...
+    Task 0: 98.4%      OLDER TASK
+    Task 1: 96.5% <<< THIS TASK
+
+>>> Training Task 2: Permuted MNIST (seed variant 2)
+  [Task 2] task module + router + head (full lr) + base_high (adaptive lr)
+  lr groups: base_high=1.00e-04  task=1.00e-03
+  [MCN-T2] Epoch 1: loss=0.518  acc=82.6%
+  [MCN-T2] Epoch 2: loss=0.162  acc=95.0%
+  [MCN-T2] Epoch 3: loss=0.108  acc=96.6%
+  [MCN-T2] Epoch 4: loss=0.078  acc=97.5%
+  [MCN-T2] Epoch 5: loss=0.062  acc=98.0%
