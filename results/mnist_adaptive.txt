@@ -25,3 +25,15 @@ METHOD: MCN
   [MCN-T0] Epoch 7: loss=0.019  acc=99.5%
   [MCN-T0] Epoch 8: loss=0.017  acc=99.5%
   [MCN-T0] Epoch 9: loss=0.016  acc=99.5%
+  [MCN-T0] Epoch 10: loss=0.015  acc=99.6%
+[MCN] base_low frozen (259,776 params). base_high adaptive (2,066,432 params @ 0.1× lr).
+  Evaluating all tasks after training task 0...
+    Task 0: 99.3% <<< THIS TASK
+
+>>> Training Task 1: Permuted MNIST (seed variant 1)
+  [Task 1] task module + router + head (full lr) + base_high (adaptive lr)
+  lr groups: base_high=1.00e-04  task=1.00e-03
+  [MCN-T1] Epoch 1: loss=0.584  acc=80.5%
+  [MCN-T1] Epoch 2: loss=0.185  acc=94.4%
+  [MCN-T1] Epoch 3: loss=0.121  acc=96.3%
+  [MCN-T1] Epoch 4: loss=0.090  acc=97.1%
