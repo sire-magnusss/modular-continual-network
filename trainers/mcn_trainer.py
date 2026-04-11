@@ -85,6 +85,10 @@ class MCNTrainer:
         if task_id == 0 and not self.model._base_frozen:
             self.model.freeze_base_encoder()
 
+        # Track how many tasks have been trained (enables task-free inference)
+        if hasattr(self.model, '_num_trained'):
+            self.model._num_trained = task_id + 1
+
     @torch.no_grad()
     def evaluate(self, task_id: int, test_loader: DataLoader) -> float:
         self.model.eval()
@@ -145,4 +149,26 @@ class MCNTrainer:
                 print(f"    Task {eval_task}: {acc*100:.1f}% {status}")
 
         tracker.print_matrix()
+
+        # Task-free evaluation (if model supports it)
+        if hasattr(self.model, 'predict_task_free'):
+            print("\n--- Task-Free Inference (entropy-based task selection) ---")
+            correct_total = 0
+            total_samples = 0
+            for eval_task in range(benchmark.num_tasks):
+                test_loader = benchmark.get_test_loader(eval_task)
+                correct = 0
+                total = 0
+                for x, y in test_loader:
+                    x, y = x.to(self.device), y.to(self.device)
+                    pred_labels, pred_tasks = self.model.predict_task_free(x)
+                    correct += (pred_labels == y).sum().item()
+                    total += x.size(0)
+                acc = correct / total
+                correct_total += correct
+                total_samples += total
+                print(f"  Task {eval_task} (task-free): {acc*100:.1f}%")
+            overall = correct_total / total_samples
+            print(f"  Overall task-free accuracy: {overall*100:.1f}%")
+
         return tracker
