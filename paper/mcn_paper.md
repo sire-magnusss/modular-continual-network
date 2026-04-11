@@ -169,6 +169,10 @@ All models trained with Adam optimizer (lr = 1e-3), batch size 128. MCN uses E =
 
 MCN surpasses all baselines by a wide margin. Naive collapses to near-chance accuracy on early tasks (Task 0 drops from 94% at training to ~50% by Task 4). EWC slows forgetting but cannot prevent it entirely as regularization conflicts grow. PackNet performs well but loses capacity by later tasks. MCN maintains near-perfect retention of all tasks: Task 0 accuracy at the end of training is within 0.1 percentage points of its accuracy right after Task 0 training.
 
+![Split-CIFAR-10 Summary (5 tasks)](../results/plots/SplitCIFAR10_5tasks_summary.png)
+![Split-CIFAR-10 Accuracy Matrix (5 tasks)](../results/plots/SplitCIFAR10_5tasks_accuracy_matrix.png)
+![Split-CIFAR-10 Per-Task Accuracy (5 tasks)](../results/plots/SplitCIFAR10_5tasks_per_task.png)
+
 **Permuted MNIST (5 tasks):**
 
 | Method      | Avg Acc | BWT      | Forgetting |
@@ -179,6 +183,10 @@ MCN surpasses all baselines by a wide margin. Naive collapses to near-chance acc
 | **MCN**     | **95.9%**| **-1.2%**| **1.2%**  |
 
 On Permuted MNIST, EWC achieves the best forgetting (1.0%) while MCN is close at 1.2%. This is an honest finding: for structurally homogeneous tasks (all inputs are permuted MNIST digits, same distribution family), EWC's soft regularization is sufficient to prevent catastrophic forgetting. MCN's modular approach provides less advantage when tasks are nearly identical in low-level structure. MCN matches EWC on average accuracy (95.9% vs 96.8%) — competitive but not dominant. The MCN advantage is clearest when tasks are visually diverse (CIFAR).
+
+![Permuted MNIST Summary (5 tasks)](../results/plots/PermutedMNIST_summary.png)
+![Permuted MNIST Accuracy Matrix (5 tasks)](../results/plots/PermutedMNIST_accuracy_matrix.png)
+![Permuted MNIST Per-Task Accuracy (5 tasks)](../results/plots/PermutedMNIST_per_task.png)
 
 **Split-CIFAR-100 (20 tasks):**
 
@@ -193,6 +201,10 @@ At 20 tasks, the scaling story is clear: Naive collapses to 23.8% (catastrophic 
 
 Notably, PackNet's ordering flips vs. CIFAR-10: it beats EWC on forgetting (4.5% vs 11.3%) but loses on accuracy (56.2% vs 66.0%). With 20 tasks, PackNet simply cannot learn the last several tasks effectively — free capacity is nearly exhausted. EWC can still learn new tasks (it never runs out of parameters) but forgets more due to compounding constraints.
 
+![Split-CIFAR-100 Summary (20 tasks)](../results/plots/SplitCIFAR100_summary.png)
+![Split-CIFAR-100 Accuracy Matrix (20 tasks)](../results/plots/SplitCIFAR100_accuracy_matrix.png)
+![Split-CIFAR-100 Per-Task Accuracy (20 tasks)](../results/plots/SplitCIFAR100_per_task.png)
+
 ---
 
 ## 5. Ablation Study
@@ -205,6 +217,10 @@ We run ablation experiments on Split-CIFAR-10 with 3 tasks to isolate each MCN c
 | MCN-NoRouter      | 87.7%   | 0.1%       | Attention routing adds +1.5% accuracy  |
 | MCN-NoGate        | 89.7%   | 0.0%       | Gate stabilizes early training          |
 | MCN-BaseOnly      | 71.7%   | 0.4%       | Task modules essential (+17.5% accuracy)|
+
+![Split-CIFAR-10 Ablation Summary (3 tasks)](../results/plots/SplitCIFAR10_3tasks_summary.png)
+![Split-CIFAR-10 Ablation Accuracy Matrix (3 tasks)](../results/plots/SplitCIFAR10_3tasks_accuracy_matrix.png)
+![Split-CIFAR-10 Ablation Per-Task Accuracy (3 tasks)](../results/plots/SplitCIFAR10_3tasks_per_task.png)
 
 **Task modules are essential.** Removing them (Base Only) drops accuracy by 17.5 percentage points. The frozen base encoder alone cannot capture task-specific patterns. Each task's adapter module learns complementary representations that the frozen general base does not encode.
 
@@ -285,6 +301,8 @@ The result suggests a broader design principle for continual learning: rather th
 ## Appendix A: Full Accuracy Matrices
 
 ### Split-CIFAR-10 (MCN)
+
+![Split-CIFAR-10 Accuracy Matrix](../results/plots/SplitCIFAR10_accuracy_matrix.png)
 
 Rows = trained up to task t. Columns = test accuracy on task j.
 
