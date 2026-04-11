@@ -35,9 +35,11 @@ from benchmarks import SplitCIFAR10, PermutedMNIST
 from models.backbone import CIFARBackbone, MNISTBackbone
 from models.ewc import EWCModel
 from models.packnet import PackNetModel
+from models.mcn import MCN
 from trainers.naive_trainer import NaiveTrainer
 from trainers.ewc_trainer import EWCTrainer
 from trainers.packnet_trainer import PackNetTrainer
+from trainers.mcn_trainer import MCNTrainer
 
 
 def parse_args():
@@ -46,8 +48,8 @@ def parse_args():
                         default="cifar10",
                         help="Which benchmark to run (default: cifar10)")
     parser.add_argument("--methods", nargs="+",
-                        choices=["naive", "ewc", "packnet"],
-                        default=["naive", "ewc", "packnet"],
+                        choices=["naive", "ewc", "packnet", "mcn"],
+                        default=["naive", "ewc", "packnet", "mcn"],
                         help="Which methods to run (default: all)")
     parser.add_argument("--epochs", type=int, default=5,
                         help="Epochs per task per method (default: 5)")
@@ -91,16 +93,18 @@ def build_benchmark(args):
 
 def build_model(benchmark_type: str, num_tasks: int, method: str,
                 ewc_lambda: float, packnet_prune: float):
+    if method == "mcn":
+        if benchmark_type == "cifar10":
+            return MCN(num_tasks=num_tasks, num_classes_per_task=2,
+                       in_channels=3, input_size=32)
+        else:
+            return MCN(num_tasks=num_tasks, num_classes_per_task=10,
+                       in_channels=1, input_size=28)
+
     if benchmark_type == "cifar10":
-        backbone = CIFARBackbone(
-            num_tasks=num_tasks,
-            num_classes_per_task=2
-        )
+        backbone = CIFARBackbone(num_tasks=num_tasks, num_classes_per_task=2)
     else:
-        backbone = MNISTBackbone(
-            num_tasks=num_tasks,
-            num_classes_per_task=10
-        )
+        backbone = MNISTBackbone(num_tasks=num_tasks, num_classes_per_task=10)
 
     if method == "naive":
         return backbone
@@ -124,6 +128,9 @@ def run_method(method_name: str, model, benchmark,
         trainer = PackNetTrainer(model, device, lr=args.lr,
                                  epochs_phase1=args.epochs,
                                  epochs_phase2=max(1, args.epochs // 3))
+    elif method_name == "mcn":
+        trainer = MCNTrainer(model, device, lr=args.lr,
+                             epochs_per_task=args.epochs)
 
     trainer.run(benchmark, tracker)
     return tracker

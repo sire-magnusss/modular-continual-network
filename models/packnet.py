@@ -64,10 +64,13 @@ class PackNetModel(nn.Module):
         self.backbone = backbone
         self.prune_fraction = prune_fraction
 
-        # Binary masks per parameter: 1 = frozen (belongs to a past task), 0 = free
+        # Binary masks per parameter: True = frozen (belongs to a past task), False = free
         self._frozen_masks: Dict[str, torch.Tensor] = {}
         # Which task each weight belongs to (-1 = free/unassigned)
         self._task_masks: Dict[str, torch.Tensor] = {}
+        # Snapshot of each parameter taken right after prune_and_freeze —
+        # used to restore frozen weights after each optimizer step (prevents Adam momentum drift)
+        self._frozen_snapshots: Dict[str, torch.Tensor] = {}
 
         self._initialize_masks()
 
@@ -83,11 +86,18 @@ class PackNetModel(nn.Module):
         return self.backbone(x, task_id)
 
     def apply_masks(self):
-        """Zero out frozen weights (called after each optimizer step during retraining)."""
+        """
+        Restore frozen weights to their post-freeze snapshot values.
+        Called after each optimizer.step() to undo any Adam momentum drift
+        on frozen parameters (even with zero gradients, Adam can nudge weights).
+        """
         with torch.no_grad():
             for name, param in self.backbone.named_parameters():
-                if name in self._frozen_masks:
-                    param.data[self._frozen_masks[name]] = 0.0
+                if name in self._frozen_masks and name in self._frozen_snapshots:
+                    mask = self._frozen_masks[name].to(param.device)
+                    if mask.any():
+                        snap = self._frozen_snapshots[name].to(param.device)
+                        param.data[mask] = snap[mask]
 
     def prune_and_freeze(self, task_id: int):
         """
@@ -145,6 +155,12 @@ class PackNetModel(nn.Module):
                     param.data[~self._frozen_masks[name] & free_mask] = 0.0
 
                     total_frozen += freeze_global_indices.numel()
+
+        # Save a snapshot of all parameters now — frozen weights will be restored
+        # to these values after every optimizer step during subsequent task training
+        for name, param in self.backbone.named_parameters():
+            if name in self._frozen_masks:
+                self._frozen_snapshots[name] = param.data.clone().cpu()
 
         pct = 100 * total_frozen / self._count_total_shared_params()
         free_pct = 100 * self._count_free_params() / self._count_total_shared_params()
