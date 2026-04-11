@@ -1,0 +1,453 @@
+[device] Using MPS (Apple Silicon GPU)
+
+Benchmark : CIFAR10
+Methods   : naive, ewc, packnet, mcn
+Epochs    : 10 per task
+Device    : mps
+Tasks     : 5
+
+============================================================
+METHOD: Naive (no forgetting prevention)
+============================================================
+
+>>> Training Task 0: airplane vs automobile
+  [Naive] Task 0 Epoch 1: loss=0.611  acc=76.6%
+  [Naive] Task 0 Epoch 2: loss=0.320  acc=86.2%
+  [Naive] Task 0 Epoch 3: loss=0.253  acc=89.6%
+  [Naive] Task 0 Epoch 4: loss=0.224  acc=91.3%
+  [Naive] Task 0 Epoch 5: loss=0.195  acc=92.5%
+  [Naive] Task 0 Epoch 6: loss=0.155  acc=93.9%
+  [Naive] Task 0 Epoch 7: loss=0.112  acc=95.7%
+  [Naive] Task 0 Epoch 8: loss=0.101  acc=96.1%
+  [Naive] Task 0 Epoch 9: loss=0.085  acc=97.0%
+  [Naive] Task 0 Epoch 10: loss=0.079  acc=97.2%
+  Evaluating all tasks after training task 0...
+    Task 0: 97.6% <<< THIS TASK
+
+>>> Training Task 1: bird vs cat
+  [Naive] Task 1 Epoch 1: loss=0.504  acc=76.8%
+  [Naive] Task 1 Epoch 2: loss=0.397  acc=82.3%
+  [Naive] Task 1 Epoch 3: loss=0.353  acc=84.6%
+  [Naive] Task 1 Epoch 4: loss=0.316  acc=86.9%
+  [Naive] Task 1 Epoch 5: loss=0.294  acc=87.9%
+  [Naive] Task 1 Epoch 6: loss=0.274  acc=89.0%
+  [Naive] Task 1 Epoch 7: loss=0.250  acc=90.0%
+  [Naive] Task 1 Epoch 8: loss=0.239  acc=90.0%
+  [Naive] Task 1 Epoch 9: loss=0.235  acc=90.7%
+  [Naive] Task 1 Epoch 10: loss=0.213  acc=91.5%
+  Evaluating all tasks after training task 1...
+    Task 0: 71.3%      OLDER TASK
+    Task 1: 89.4% <<< THIS TASK
+
+>>> Training Task 2: deer vs dog
+  [Naive] Task 2 Epoch 1: loss=0.440  acc=79.9%
+  [Naive] Task 2 Epoch 2: loss=0.248  acc=90.4%
+  [Naive] Task 2 Epoch 3: loss=0.212  acc=91.7%
+  [Naive] Task 2 Epoch 4: loss=0.193  acc=92.5%
+  [Naive] Task 2 Epoch 5: loss=0.177  acc=93.2%
+  [Naive] Task 2 Epoch 6: loss=0.159  acc=93.8%
+  [Naive] Task 2 Epoch 7: loss=0.156  acc=94.1%
+  [Naive] Task 2 Epoch 8: loss=0.150  acc=94.5%
+  [Naive] Task 2 Epoch 9: loss=0.137  acc=94.9%
+  [Naive] Task 2 Epoch 10: loss=0.136  acc=94.7%
+  Evaluating all tasks after training task 2...
+    Task 0: 30.4%      OLDER TASK
+    Task 1: 39.8%      OLDER TASK
+    Task 2: 94.5% <<< THIS TASK
+
+>>> Training Task 3: frog vs horse
+  [Naive] Task 3 Epoch 1: loss=0.219  acc=90.8%
+  [Naive] Task 3 Epoch 2: loss=0.117  acc=95.9%
+  [Naive] Task 3 Epoch 3: loss=0.086  acc=96.9%
+  [Naive] Task 3 Epoch 4: loss=0.080  acc=97.2%
+  [Naive] Task 3 Epoch 5: loss=0.062  acc=97.8%
+  [Naive] Task 3 Epoch 6: loss=0.064  acc=97.6%
+  [Naive] Task 3 Epoch 7: loss=0.055  acc=97.9%
+  [Naive] Task 3 Epoch 8: loss=0.052  acc=98.0%
+  [Naive] Task 3 Epoch 9: loss=0.052  acc=98.1%
+  [Naive] Task 3 Epoch 10: loss=0.046  acc=98.4%
+  Evaluating all tasks after training task 3...
+    Task 0: 44.6%      OLDER TASK
+    Task 1: 44.8%      OLDER TASK
+    Task 2: 64.5%      OLDER TASK
+    Task 3: 96.5% <<< THIS TASK
+
+>>> Training Task 4: ship vs truck
+  [Naive] Task 4 Epoch 1: loss=0.218  acc=91.7%
+  [Naive] Task 4 Epoch 2: loss=0.127  acc=95.3%
+  [Naive] Task 4 Epoch 3: loss=0.111  acc=96.1%
+  [Naive] Task 4 Epoch 4: loss=0.087  acc=96.8%
+  [Naive] Task 4 Epoch 5: loss=0.082  acc=97.1%
+  [Naive] Task 4 Epoch 6: loss=0.083  acc=97.1%
+  [Naive] Task 4 Epoch 7: loss=0.066  acc=97.7%
+  [Naive] Task 4 Epoch 8: loss=0.061  acc=97.8%
+  [Naive] Task 4 Epoch 9: loss=0.066  acc=97.6%
+  [Naive] Task 4 Epoch 10: loss=0.053  acc=98.1%
+  Evaluating all tasks after training task 4...
+    Task 0: 21.0%      OLDER TASK
+    Task 1: 44.0%      OLDER TASK
+    Task 2: 58.6%      OLDER TASK
+    Task 3: 75.5%      OLDER TASK
+    Task 4: 97.6% <<< THIS TASK
+
+--- Accuracy Matrix R[trained_up_to][task] ---
+      T0  T1  T2  T3  T4
+After T0:  97.6    ---    ---    ---    ---  
+After T1:  71.3   89.4    ---    ---    ---  
+After T2:  30.4   39.8   94.5    ---    ---  
+After T3:  44.6   44.8   64.5   96.5    ---  
+After T4:  21.0   44.0   58.6   75.5   97.6  
+
+Average Accuracy : 59.33%
+Backward Transfer: -44.71%
+Forgetting Measure: 44.71%
+
+============================================================
+METHOD: EWC (λ=5000.0)
+============================================================
+
+>>> Training Task 0: airplane vs automobile
+  [EWC] Task 0 Epoch 1: task_loss=0.706  ewc_loss=0.0000  acc=72.0%
+  [EWC] Task 0 Epoch 2: task_loss=0.336  ewc_loss=0.0000  acc=85.8%
+  [EWC] Task 0 Epoch 3: task_loss=0.248  ewc_loss=0.0000  acc=89.7%
+  [EWC] Task 0 Epoch 4: task_loss=0.217  ewc_loss=0.0000  acc=91.4%
+  [EWC] Task 0 Epoch 5: task_loss=0.178  ewc_loss=0.0000  acc=93.0%
+  [EWC] Task 0 Epoch 6: task_loss=0.162  ewc_loss=0.0000  acc=93.6%
+  [EWC] Task 0 Epoch 7: task_loss=0.117  ewc_loss=0.0000  acc=95.6%
+  [EWC] Task 0 Epoch 8: task_loss=0.104  ewc_loss=0.0000  acc=96.3%
+  [EWC] Task 0 Epoch 9: task_loss=0.105  ewc_loss=0.0000  acc=96.1%
+  [EWC] Task 0 Epoch 10: task_loss=0.082  ewc_loss=0.0000  acc=97.0%
+[EWC] Consolidated task 0 (λ=5000.0, 1024 samples)
+  Evaluating all tasks after training task 0...
+    Task 0: 94.8% <<< THIS TASK
+
+>>> Training Task 1: bird vs cat
+  [EWC] Task 1 Epoch 1: task_loss=0.540  ewc_loss=0.0613  acc=73.4%
+  [EWC] Task 1 Epoch 2: task_loss=0.422  ewc_loss=0.0744  acc=81.5%
+  [EWC] Task 1 Epoch 3: task_loss=0.393  ewc_loss=0.0747  acc=82.8%
+  [EWC] Task 1 Epoch 4: task_loss=0.371  ewc_loss=0.0761  acc=84.1%
+  [EWC] Task 1 Epoch 5: task_loss=0.354  ewc_loss=0.0815  acc=84.5%
+  [EWC] Task 1 Epoch 6: task_loss=0.343  ewc_loss=0.0871  acc=85.2%
+  [EWC] Task 1 Epoch 7: task_loss=0.334  ewc_loss=0.0846  acc=85.7%
+  [EWC] Task 1 Epoch 8: task_loss=0.316  ewc_loss=0.0845  acc=86.6%
+  [EWC] Task 1 Epoch 9: task_loss=0.316  ewc_loss=0.0940  acc=86.8%
+  [EWC] Task 1 Epoch 10: task_loss=0.306  ewc_loss=0.0893  acc=86.9%
+[EWC] Consolidated task 1 (λ=5000.0, 1024 samples)
+  Evaluating all tasks after training task 1...
+    Task 0: 73.2%      OLDER TASK
+    Task 1: 75.6% <<< THIS TASK
+
+>>> Training Task 2: deer vs dog
+  [EWC] Task 2 Epoch 1: task_loss=0.402  ewc_loss=0.2098  acc=82.1%
+  [EWC] Task 2 Epoch 2: task_loss=0.325  ewc_loss=0.1876  acc=86.3%
+  [EWC] Task 2 Epoch 3: task_loss=0.306  ewc_loss=0.1937  acc=87.1%
+  [EWC] Task 2 Epoch 4: task_loss=0.296  ewc_loss=0.1901  acc=87.5%
+  [EWC] Task 2 Epoch 5: task_loss=0.284  ewc_loss=0.1957  acc=88.5%
+  [EWC] Task 2 Epoch 6: task_loss=0.277  ewc_loss=0.1917  acc=88.5%
+  [EWC] Task 2 Epoch 7: task_loss=0.278  ewc_loss=0.1951  acc=88.5%
+  [EWC] Task 2 Epoch 8: task_loss=0.279  ewc_loss=0.2083  acc=88.1%
+  [EWC] Task 2 Epoch 9: task_loss=0.261  ewc_loss=0.2003  acc=89.4%
+  [EWC] Task 2 Epoch 10: task_loss=0.263  ewc_loss=0.1897  acc=89.4%
+[EWC] Consolidated task 2 (λ=5000.0, 1024 samples)
+  Evaluating all tasks after training task 2...
+    Task 0: 58.0%      OLDER TASK
+    Task 1: 81.9%      OLDER TASK
+    Task 2: 87.4% <<< THIS TASK
+
+>>> Training Task 3: frog vs horse
+  [EWC] Task 3 Epoch 1: task_loss=0.260  ewc_loss=0.3217  acc=88.6%
+  [EWC] Task 3 Epoch 2: task_loss=0.183  ewc_loss=0.2730  acc=92.7%
+  [EWC] Task 3 Epoch 3: task_loss=0.172  ewc_loss=0.2862  acc=93.4%
+  [EWC] Task 3 Epoch 4: task_loss=0.164  ewc_loss=0.2652  acc=93.8%
+  [EWC] Task 3 Epoch 5: task_loss=0.153  ewc_loss=0.2695  acc=93.9%
+  [EWC] Task 3 Epoch 6: task_loss=0.150  ewc_loss=0.2684  acc=94.1%
+  [EWC] Task 3 Epoch 7: task_loss=0.153  ewc_loss=0.2693  acc=94.2%
+  [EWC] Task 3 Epoch 8: task_loss=0.138  ewc_loss=0.2572  acc=94.6%
+  [EWC] Task 3 Epoch 9: task_loss=0.142  ewc_loss=0.2609  acc=94.7%
+  [EWC] Task 3 Epoch 10: task_loss=0.132  ewc_loss=0.2547  acc=95.0%
+[EWC] Consolidated task 3 (λ=5000.0, 1024 samples)
+  Evaluating all tasks after training task 3...
+    Task 0: 79.0%      OLDER TASK
+    Task 1: 84.5%      OLDER TASK
+    Task 2: 84.8%      OLDER TASK
+    Task 3: 92.0% <<< THIS TASK
+
+>>> Training Task 4: ship vs truck
+  [EWC] Task 4 Epoch 1: task_loss=0.286  ewc_loss=0.4229  acc=88.3%
+  [EWC] Task 4 Epoch 2: task_loss=0.236  ewc_loss=0.3291  acc=90.6%
+  [EWC] Task 4 Epoch 3: task_loss=0.221  ewc_loss=0.3395  acc=91.4%
+  [EWC] Task 4 Epoch 4: task_loss=0.213  ewc_loss=0.3289  acc=91.5%
+  [EWC] Task 4 Epoch 5: task_loss=0.204  ewc_loss=0.3298  acc=91.9%
+  [EWC] Task 4 Epoch 6: task_loss=0.216  ewc_loss=0.3491  acc=91.5%
+  [EWC] Task 4 Epoch 7: task_loss=0.202  ewc_loss=0.3513  acc=92.2%
+  [EWC] Task 4 Epoch 8: task_loss=0.192  ewc_loss=0.3389  acc=92.7%
+  [EWC] Task 4 Epoch 9: task_loss=0.189  ewc_loss=0.3367  acc=92.7%
+  [EWC] Task 4 Epoch 10: task_loss=0.186  ewc_loss=0.3384  acc=92.9%
+[EWC] Consolidated task 4 (λ=5000.0, 1024 samples)
+  Evaluating all tasks after training task 4...
+    Task 0: 78.9%      OLDER TASK
+    Task 1: 82.8%      OLDER TASK
+    Task 2: 85.8%      OLDER TASK
+    Task 3: 95.0%      OLDER TASK
+    Task 4: 94.1% <<< THIS TASK
+
+--- Accuracy Matrix R[trained_up_to][task] ---
+      T0  T1  T2  T3  T4
+After T0:  94.8    ---    ---    ---    ---  
+After T1:  73.2   75.6    ---    ---    ---  
+After T2:  58.0   81.9   87.4    ---    ---  
+After T3:  79.0   84.5   84.8   92.0    ---  
+After T4:  78.9   82.8   85.8   95.0   94.1  
+
+Average Accuracy : 87.33%
+Backward Transfer: -1.80%
+Forgetting Measure: 4.79%
+
+============================================================
+METHOD: PackNet (prune_fraction=0.5)
+============================================================
+
+>>> Training Task 0: airplane vs automobile
+  Phase 1: Training free weights...
+  [PackNet] Task 0 Phase1 Epoch 1: loss=0.612  acc=75.9%
+  [PackNet] Task 0 Phase1 Epoch 2: loss=0.345  acc=85.4%
+  [PackNet] Task 0 Phase1 Epoch 3: loss=0.270  acc=88.9%
+  [PackNet] Task 0 Phase1 Epoch 4: loss=0.223  acc=91.1%
+  [PackNet] Task 0 Phase1 Epoch 5: loss=0.182  acc=92.8%
+  [PackNet] Task 0 Phase1 Epoch 6: loss=0.140  acc=94.7%
+  [PackNet] Task 0 Phase1 Epoch 7: loss=0.126  acc=95.2%
+  [PackNet] Task 0 Phase1 Epoch 8: loss=0.102  acc=96.0%
+  [PackNet] Task 0 Phase1 Epoch 9: loss=0.086  acc=96.8%
+  [PackNet] Task 0 Phase1 Epoch 10: loss=0.089  acc=96.8%
+[PackNet] Task 0 frozen 1,622,458 weights (50.0%). Free capacity remaining: 50.0%
+  Phase 2: Retraining pruned weights only...
+  [PackNet] Task 0 Phase2 Epoch 1: loss=0.106  acc=96.0%
+  [PackNet] Task 0 Phase2 Epoch 2: loss=0.073  acc=97.2%
+  [PackNet] Task 0 Phase2 Epoch 3: loss=0.067  acc=97.4%
+  Evaluating all tasks after training task 0...
+    Task 0: 97.9% <<< THIS TASK
+
+>>> Training Task 1: bird vs cat
+  Phase 1: Training free weights...
+  [PackNet] Task 1 Phase1 Epoch 1: loss=0.487  acc=76.9%
+  [PackNet] Task 1 Phase1 Epoch 2: loss=0.399  acc=82.3%
+  [PackNet] Task 1 Phase1 Epoch 3: loss=0.359  acc=84.9%
+  [PackNet] Task 1 Phase1 Epoch 4: loss=0.340  acc=85.2%
+  [PackNet] Task 1 Phase1 Epoch 5: loss=0.316  acc=86.4%
+  [PackNet] Task 1 Phase1 Epoch 6: loss=0.299  acc=87.2%
+  [PackNet] Task 1 Phase1 Epoch 7: loss=0.279  acc=88.3%
+  [PackNet] Task 1 Phase1 Epoch 8: loss=0.269  acc=88.7%
+  [PackNet] Task 1 Phase1 Epoch 9: loss=0.253  acc=89.6%
+  [PackNet] Task 1 Phase1 Epoch 10: loss=0.254  acc=89.5%
+[PackNet] Task 1 frozen 1,622,204 weights (50.0%). Free capacity remaining: 0.0%
+  Phase 2: Retraining pruned weights only...
+  [PackNet] Task 1 Phase2 Epoch 1: loss=0.229  acc=90.6%
+  [PackNet] Task 1 Phase2 Epoch 2: loss=0.228  acc=90.7%
+  [PackNet] Task 1 Phase2 Epoch 3: loss=0.224  acc=90.6%
+  Evaluating all tasks after training task 1...
+    Task 0: 67.5%      OLDER TASK
+    Task 1: 88.6% <<< THIS TASK
+
+>>> Training Task 2: deer vs dog
+  Phase 1: Training free weights...
+  [PackNet] Task 2 Phase1 Epoch 1: loss=0.574  acc=70.5%
+  [PackNet] Task 2 Phase1 Epoch 2: loss=0.527  acc=74.3%
+  [PackNet] Task 2 Phase1 Epoch 3: loss=0.509  acc=75.7%
+  [PackNet] Task 2 Phase1 Epoch 4: loss=0.507  acc=75.5%
+  [PackNet] Task 2 Phase1 Epoch 5: loss=0.508  acc=76.1%
+  [PackNet] Task 2 Phase1 Epoch 6: loss=0.505  acc=75.8%
+  [PackNet] Task 2 Phase1 Epoch 7: loss=0.496  acc=77.0%
+  [PackNet] Task 2 Phase1 Epoch 8: loss=0.500  acc=76.8%
+  [PackNet] Task 2 Phase1 Epoch 9: loss=0.497  acc=77.4%
+  [PackNet] Task 2 Phase1 Epoch 10: loss=0.498  acc=76.8%
+[PackNet] Task 2 frozen 202 weights (0.0%). Free capacity remaining: 0.0%
+  Phase 2: Retraining pruned weights only...
+  [PackNet] Task 2 Phase2 Epoch 1: loss=0.496  acc=76.4%
+  [PackNet] Task 2 Phase2 Epoch 2: loss=0.490  acc=77.3%
+  [PackNet] Task 2 Phase2 Epoch 3: loss=0.495  acc=76.7%
+  Evaluating all tasks after training task 2...
+    Task 0: 66.2%      OLDER TASK
+    Task 1: 88.1%      OLDER TASK
+    Task 2: 78.7% <<< THIS TASK
+
+>>> Training Task 3: frog vs horse
+  Phase 1: Training free weights...
+  [PackNet] Task 3 Phase1 Epoch 1: loss=0.660  acc=60.7%
+  [PackNet] Task 3 Phase1 Epoch 2: loss=0.616  acc=66.1%
+  [PackNet] Task 3 Phase1 Epoch 3: loss=0.606  acc=67.7%
+  [PackNet] Task 3 Phase1 Epoch 4: loss=0.602  acc=68.3%
+  [PackNet] Task 3 Phase1 Epoch 5: loss=0.597  acc=69.0%
+  [PackNet] Task 3 Phase1 Epoch 6: loss=0.597  acc=68.8%
+  [PackNet] Task 3 Phase1 Epoch 7: loss=0.603  acc=68.3%
+  [PackNet] Task 3 Phase1 Epoch 8: loss=0.593  acc=68.9%
+  [PackNet] Task 3 Phase1 Epoch 9: loss=0.604  acc=67.9%
+  [PackNet] Task 3 Phase1 Epoch 10: loss=0.598  acc=68.2%
+[PackNet] Task 3 frozen 0 weights (0.0%). Free capacity remaining: 0.0%
+  Phase 2: Retraining pruned weights only...
+  [PackNet] Task 3 Phase2 Epoch 1: loss=0.598  acc=67.9%
+  [PackNet] Task 3 Phase2 Epoch 2: loss=0.594  acc=69.0%
+  [PackNet] Task 3 Phase2 Epoch 3: loss=0.602  acc=67.9%
+  Evaluating all tasks after training task 3...
+    Task 0: 73.0%      OLDER TASK
+    Task 1: 87.8%      OLDER TASK
+    Task 2: 75.5%      OLDER TASK
+    Task 3: 73.8% <<< THIS TASK
+
+>>> Training Task 4: ship vs truck
+  Phase 1: Training free weights...
+  [PackNet] Task 4 Phase1 Epoch 1: loss=0.548  acc=72.8%
+  [PackNet] Task 4 Phase1 Epoch 2: loss=0.482  acc=77.5%
+  [PackNet] Task 4 Phase1 Epoch 3: loss=0.486  acc=77.2%
+  [PackNet] Task 4 Phase1 Epoch 4: loss=0.482  acc=78.2%
+  [PackNet] Task 4 Phase1 Epoch 5: loss=0.479  acc=78.5%
+  [PackNet] Task 4 Phase1 Epoch 6: loss=0.471  acc=78.4%
+  [PackNet] Task 4 Phase1 Epoch 7: loss=0.479  acc=78.1%
+  [PackNet] Task 4 Phase1 Epoch 8: loss=0.467  acc=78.6%
+  [PackNet] Task 4 Phase1 Epoch 9: loss=0.481  acc=78.1%
+  [PackNet] Task 4 Phase1 Epoch 10: loss=0.477  acc=78.4%
+[PackNet] Task 4 frozen 0 weights (0.0%). Free capacity remaining: 0.0%
+  Phase 2: Retraining pruned weights only...
+  [PackNet] Task 4 Phase2 Epoch 1: loss=0.476  acc=78.1%
+  [PackNet] Task 4 Phase2 Epoch 2: loss=0.469  acc=78.6%
+  [PackNet] Task 4 Phase2 Epoch 3: loss=0.483  acc=77.9%
+  Evaluating all tasks after training task 4...
+    Task 0: 67.6%      OLDER TASK
+    Task 1: 87.6%      OLDER TASK
+    Task 2: 78.5%      OLDER TASK
+    Task 3: 73.1%      OLDER TASK
+    Task 4: 79.9% <<< THIS TASK
+
+--- Accuracy Matrix R[trained_up_to][task] ---
+      T0  T1  T2  T3  T4
+After T0:  97.9    ---    ---    ---    ---  
+After T1:  67.5   88.6    ---    ---    ---  
+After T2:  66.2   88.1   78.7    ---    ---  
+After T3:  73.0   87.8   75.5   73.8    ---  
+After T4:  67.6   87.6   78.5   73.1   79.9  
+
+Average Accuracy : 77.35%
+Backward Transfer: -8.04%
+Forgetting Measure: 8.04%
+
+============================================================
+METHOD: MCN (Modular Continual Network)
+============================================================
+  Base encoder params : 3,244,864
+  Per-task params     : 1,044,293 (module=319,041, router=724,226, head=1,026)
+  Total (5 tasks)    : 8,466,329
+
+>>> Training Task 0: airplane vs automobile
+  [Task 0] Training full network, then freezing base encoder
+  [MCN-T0] Epoch 1: loss=0.533  acc=76.7%
+  [MCN-T0] Epoch 2: loss=0.260  acc=89.3%
+  [MCN-T0] Epoch 3: loss=0.195  acc=92.1%
+  [MCN-T0] Epoch 4: loss=0.170  acc=93.2%
+  [MCN-T0] Epoch 5: loss=0.150  acc=94.0%
+  [MCN-T0] Epoch 6: loss=0.136  acc=94.7%
+  [MCN-T0] Epoch 7: loss=0.117  acc=95.4%
+  [MCN-T0] Epoch 8: loss=0.109  acc=95.7%
+  [MCN-T0] Epoch 9: loss=0.104  acc=95.9%
+  [MCN-T0] Epoch 10: loss=0.088  acc=96.5%
+[MCN] Base encoder frozen. Future tasks will only update their own modules.
+  Evaluating all tasks after training task 0...
+    Task 0: 97.5% <<< THIS TASK
+
+>>> Training Task 1: bird vs cat
+  [Task 1] Training only: task module + router + head
+  [MCN-T1] Epoch 1: loss=0.765  acc=67.2%
+  [MCN-T1] Epoch 2: loss=0.507  acc=75.7%
+  [MCN-T1] Epoch 3: loss=0.478  acc=77.2%
+  [MCN-T1] Epoch 4: loss=0.430  acc=80.4%
+  [MCN-T1] Epoch 5: loss=0.409  acc=81.4%
+  [MCN-T1] Epoch 6: loss=0.393  acc=82.5%
+  [MCN-T1] Epoch 7: loss=0.366  acc=83.9%
+  [MCN-T1] Epoch 8: loss=0.359  acc=84.1%
+  [MCN-T1] Epoch 9: loss=0.329  acc=86.0%
+  [MCN-T1] Epoch 10: loss=0.322  acc=86.0%
+  Evaluating all tasks after training task 1...
+    Task 0: 97.5%      OLDER TASK
+    Task 1: 85.9% <<< THIS TASK
+
+>>> Training Task 2: deer vs dog
+  [Task 2] Training only: task module + router + head
+  [MCN-T2] Epoch 1: loss=0.705  acc=66.4%
+  [MCN-T2] Epoch 2: loss=0.422  acc=80.5%
+  [MCN-T2] Epoch 3: loss=0.356  acc=84.3%
+  [MCN-T2] Epoch 4: loss=0.323  acc=85.9%
+  [MCN-T2] Epoch 5: loss=0.297  acc=87.5%
+  [MCN-T2] Epoch 6: loss=0.282  acc=88.9%
+  [MCN-T2] Epoch 7: loss=0.259  acc=89.3%
+  [MCN-T2] Epoch 8: loss=0.256  acc=89.6%
+  [MCN-T2] Epoch 9: loss=0.233  acc=90.8%
+  [MCN-T2] Epoch 10: loss=0.222  acc=91.1%
+  Evaluating all tasks after training task 2...
+    Task 0: 97.5%      OLDER TASK
+    Task 1: 85.9%      OLDER TASK
+    Task 2: 90.0% <<< THIS TASK
+
+>>> Training Task 3: frog vs horse
+  [Task 3] Training only: task module + router + head
+  [MCN-T3] Epoch 1: loss=0.729  acc=68.8%
+  [MCN-T3] Epoch 2: loss=0.277  acc=88.2%
+  [MCN-T3] Epoch 3: loss=0.180  acc=92.8%
+  [MCN-T3] Epoch 4: loss=0.146  acc=94.3%
+  [MCN-T3] Epoch 5: loss=0.135  acc=94.6%
+  [MCN-T3] Epoch 6: loss=0.130  acc=95.0%
+  [MCN-T3] Epoch 7: loss=0.116  acc=95.6%
+  [MCN-T3] Epoch 8: loss=0.099  acc=96.2%
+  [MCN-T3] Epoch 9: loss=0.097  acc=96.3%
+  [MCN-T3] Epoch 10: loss=0.089  acc=96.5%
+  Evaluating all tasks after training task 3...
+    Task 0: 97.5%      OLDER TASK
+    Task 1: 85.9%      OLDER TASK
+    Task 2: 90.0%      OLDER TASK
+    Task 3: 95.6% <<< THIS TASK
+
+>>> Training Task 4: ship vs truck
+  [Task 4] Training only: task module + router + head
+  [MCN-T4] Epoch 1: loss=0.496  acc=78.1%
+  [MCN-T4] Epoch 2: loss=0.245  acc=90.0%
+  [MCN-T4] Epoch 3: loss=0.208  acc=91.6%
+  [MCN-T4] Epoch 4: loss=0.189  acc=92.5%
+  [MCN-T4] Epoch 5: loss=0.174  acc=93.1%
+  [MCN-T4] Epoch 6: loss=0.154  acc=94.0%
+  [MCN-T4] Epoch 7: loss=0.164  acc=93.2%
+  [MCN-T4] Epoch 8: loss=0.150  acc=94.2%
+  [MCN-T4] Epoch 9: loss=0.138  acc=94.6%
+  [MCN-T4] Epoch 10: loss=0.131  acc=95.0%
+  Evaluating all tasks after training task 4...
+    Task 0: 97.5%      OLDER TASK
+    Task 1: 85.9%      OLDER TASK
+    Task 2: 90.0%      OLDER TASK
+    Task 3: 95.6%      OLDER TASK
+    Task 4: 95.0% <<< THIS TASK
+
+--- Accuracy Matrix R[trained_up_to][task] ---
+      T0  T1  T2  T3  T4
+After T0:  97.5    ---    ---    ---    ---  
+After T1:  97.5   85.9    ---    ---    ---  
+After T2:  97.5   85.9   90.0    ---    ---  
+After T3:  97.5   85.9   90.0   95.6    ---  
+After T4:  97.5   85.9   90.0   95.6   95.0  
+
+Average Accuracy : 92.80%
+Backward Transfer: 0.00%
+Forgetting Measure: 0.00%
+
+============================================================
+FINAL COMPARISON
+============================================================
+Method          Avg Acc        BWT   Forgetting
+--------------------------------------------------
+Naive             59.3%    -44.7%       44.7%
+Ewc               87.3%     -1.8%        4.8%
+Packnet           77.3%     -8.0%        8.0%
+Mcn               92.8%      0.0%        0.0%
+
+Avg Acc    — higher is better (accuracy after all tasks)
+BWT        — less negative is better (negative = forgetting)
+Forgetting — lower is better (drop from peak accuracy)
+
+Generating plots...
+
+[viz] Plots saved to /Users/sire_magnusss/Documents/NEW MODEL/continual-learning-arch/results/plots/

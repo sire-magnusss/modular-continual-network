@@ -86,18 +86,23 @@ class MCNTrainer:
         return correct / total
 
     def run(self, benchmark, tracker: MetricTracker):
+        method_name = type(self.model).__name__
         print("\n" + "="*60)
-        print("METHOD: MCN (Modular Continual Network)")
+        print(f"METHOD: {method_name}")
         print("="*60)
 
-        # Print parameter budget
-        counts = self.model.param_count()
-        print(f"  Base encoder params : {counts['base_encoder']:,}")
-        print(f"  Per-task params     : {counts['per_task_total']:,} "
-              f"(module={counts['per_task_module']:,}, "
-              f"router={counts['per_task_router']:,}, "
-              f"head={counts['per_task_head']:,})")
-        print(f"  Total ({benchmark.num_tasks} tasks)    : {counts['total_for_n_tasks']:,}")
+        # Print parameter budget (only if the model supports it)
+        if hasattr(self.model, "param_count"):
+            counts = self.model.param_count()
+            print(f"  Base encoder params : {counts['base_encoder']:,}")
+            print(f"  Per-task params     : {counts['per_task_total']:,} "
+                  f"(module={counts['per_task_module']:,}, "
+                  f"router={counts['per_task_router']:,}, "
+                  f"head={counts['per_task_head']:,})")
+            print(f"  Total ({benchmark.num_tasks} tasks)    : {counts['total_for_n_tasks']:,}")
+        else:
+            total = sum(p.numel() for p in self.model.parameters())
+            print(f"  Total params: {total:,}")
 
         for task_id in range(benchmark.num_tasks):
             print(f"\n>>> Training {benchmark.task_description(task_id)}")

@@ -36,6 +36,7 @@ from models.backbone import CIFARBackbone, MNISTBackbone
 from models.ewc import EWCModel
 from models.packnet import PackNetModel
 from models.mcn import MCN
+from models.mcn_ablations import MCNNoRouter, MCNNoGate, MCNBaseOnly
 from trainers.naive_trainer import NaiveTrainer
 from trainers.ewc_trainer import EWCTrainer
 from trainers.packnet_trainer import PackNetTrainer
@@ -48,7 +49,8 @@ def parse_args():
                         default="cifar10",
                         help="Which benchmark to run (default: cifar10)")
     parser.add_argument("--methods", nargs="+",
-                        choices=["naive", "ewc", "packnet", "mcn"],
+                        choices=["naive", "ewc", "packnet", "mcn",
+                                 "mcn_no_router", "mcn_no_gate", "mcn_base_only"],
                         default=["naive", "ewc", "packnet", "mcn"],
                         help="Which methods to run (default: all)")
     parser.add_argument("--epochs", type=int, default=5,
@@ -93,13 +95,22 @@ def build_benchmark(args):
 
 def build_model(benchmark_type: str, num_tasks: int, method: str,
                 ewc_lambda: float, packnet_prune: float):
+    in_ch = 3 if benchmark_type == "cifar10" else 1
+    sz    = 32 if benchmark_type == "cifar10" else 28
+    n_cls = 2  if benchmark_type == "cifar10" else 10
+
     if method == "mcn":
-        if benchmark_type == "cifar10":
-            return MCN(num_tasks=num_tasks, num_classes_per_task=2,
-                       in_channels=3, input_size=32)
-        else:
-            return MCN(num_tasks=num_tasks, num_classes_per_task=10,
-                       in_channels=1, input_size=28)
+        return MCN(num_tasks=num_tasks, num_classes_per_task=n_cls,
+                   in_channels=in_ch, input_size=sz)
+    elif method == "mcn_no_router":
+        return MCNNoRouter(num_tasks=num_tasks, num_classes_per_task=n_cls,
+                           in_channels=in_ch, input_size=sz)
+    elif method == "mcn_no_gate":
+        return MCNNoGate(num_tasks=num_tasks, num_classes_per_task=n_cls,
+                         in_channels=in_ch, input_size=sz)
+    elif method == "mcn_base_only":
+        return MCNBaseOnly(num_tasks=num_tasks, num_classes_per_task=n_cls,
+                           base_dim=512, in_channels=in_ch, input_size=sz)
 
     if benchmark_type == "cifar10":
         backbone = CIFARBackbone(num_tasks=num_tasks, num_classes_per_task=2)
@@ -128,7 +139,7 @@ def run_method(method_name: str, model, benchmark,
         trainer = PackNetTrainer(model, device, lr=args.lr,
                                  epochs_phase1=args.epochs,
                                  epochs_phase2=max(1, args.epochs // 3))
-    elif method_name == "mcn":
+    elif method_name in ("mcn", "mcn_no_router", "mcn_no_gate", "mcn_base_only"):
         trainer = MCNTrainer(model, device, lr=args.lr,
                              epochs_per_task=args.epochs)
 

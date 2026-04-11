@@ -109,20 +109,25 @@ class TaskModule(nn.Module):
             nn.MaxPool2d(2, 2),
         )
 
+        flat_dim = 64 * pooled_size * pooled_size
         self.fc = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(64 * pooled_size * pooled_size, out_dim),
+            nn.Linear(flat_dim, out_dim * 2),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.2),
+            nn.Linear(out_dim * 2, out_dim),
             nn.ReLU(inplace=True),
         )
 
-        # Residual gate: scalar weight initialized near 0 so the module
-        # starts by contributing almost nothing (stable init).
-        # As training proceeds, this gate opens up.
-        self.gate = nn.Parameter(torch.zeros(1))
+        # Gate initialized to -3 so sigmoid(-3) ≈ 0.05:
+        # module starts contributing almost nothing, opens up as task-specific
+        # gradients push it. This prevents the unfrozen task module from
+        # destabilizing the frozen base encoder's output early in training.
+        self.gate = nn.Parameter(torch.tensor([-3.0]))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         feat = self.fc(self.conv_blocks(x))
-        # Sigmoid gate keeps contribution in [0, 1] range
+        # Sigmoid gate: starts ~0.05, gradually opens toward 1.0
         return feat * torch.sigmoid(self.gate)
 
 
@@ -146,37 +151,41 @@ class Router(nn.Module):
         super().__init__()
         concat_dim = base_dim + task_dim
 
-        self.blend = nn.Sequential(
-            nn.Linear(concat_dim, 256),
-            nn.ReLU(inplace=True),
-            nn.Linear(256, out_dim),
-        )
-
-        # Attention gate: how much to trust base vs task features
+        # Per-sample attention: learns which stream to trust based on the
+        # actual content of that sample's features (not a fixed scalar)
         self.attn = nn.Sequential(
-            nn.Linear(concat_dim, 2),  # 2 logits: [base_weight, task_weight]
+            nn.Linear(concat_dim, 128),
+            nn.ReLU(inplace=True),
+            nn.Linear(128, 2),
             nn.Softmax(dim=1),
         )
 
-        # Projection layers to make base_feat and task_feat same dim for attention
+        # Projection layers: bring both streams to out_dim before blending
         self.base_proj = nn.Linear(base_dim, out_dim)
         self.task_proj = nn.Linear(task_dim, out_dim)
+
+        # Final fusion layer: takes weighted-sum features → out_dim
+        self.fusion = nn.Sequential(
+            nn.Linear(out_dim, out_dim),
+            nn.ReLU(inplace=True),
+        )
 
     def forward(self, base_feat: torch.Tensor,
                 task_feat: torch.Tensor) -> torch.Tensor:
         concat = torch.cat([base_feat, task_feat], dim=1)
 
-        # Compute attention weights over base vs task streams
-        weights = self.attn(concat)  # (B, 2)
-        w_base = weights[:, 0:1]     # (B, 1)
-        w_task = weights[:, 1:2]     # (B, 1)
+        # Per-sample attention weights (B, 2)
+        weights = self.attn(concat)
+        w_base = weights[:, 0:1]   # (B, 1)
+        w_task = weights[:, 1:2]   # (B, 1)
 
-        # Weighted sum of projected features
-        blended = (w_base * self.base_proj(base_feat) +
-                   w_task * self.task_proj(task_feat))
+        # Project both streams to the same dim, then weighted sum
+        base_p = self.base_proj(base_feat)   # (B, out_dim)
+        task_p = self.task_proj(task_feat)   # (B, out_dim)
+        blended = w_base * base_p + w_task * task_p
 
-        # Final non-linear transformation
-        return self.blend(concat) + blended  # residual connection
+        # Residual fusion: blend + skip from base projection
+        return self.fusion(blended) + base_p
 
 
 # ─── MCN Main Model ──────────────────────────────────────────────────────────
