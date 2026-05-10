@@ -455,4 +455,4 @@ Forgetting — lower is better (drop from peak accuracy)
 
 Generating plots...
 
-[viz] Plots saved to /Users/sire_magnusss/Documents/NEW MODEL/continual-learning-arch/results/plots/
+[viz] Plots saved to results/plots/
