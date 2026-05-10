@@ -154,8 +154,7 @@ modular-continual-network/
 │   ├── hat_trainer.py          HAT with temperature annealing
 │   └── mcn_trainer.py          MCN trainer with task-free inference
 ├── paper/
-│   ├── mcn_paper.md            Full paper (Markdown)
-│   └── mcn_paper.tex           arXiv-ready LaTeX
+│   └── mcn_paper MAGNUS MAKGASANE.pdf  Full paper
 ├── utils/
 │   ├── device.py               MPS / CUDA / CPU detection
 │   ├── metrics.py              AA, BWT, Forgetting Measure
