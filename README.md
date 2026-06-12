@@ -135,11 +135,11 @@ python main.py --methods mcn mcn_no_router mcn_no_gate mcn_base_only --tasks 3 -
 
 ## Metrics
 
-**Average Accuracy (AA)** — mean test accuracy across all tasks after the final task. Higher is better.
+**Average Accuracy (AA)** - mean test accuracy across all tasks after the final task. Higher is better.
 
-**Backward Transfer (BWT)** — how much training new tasks hurt old ones. More negative = more forgetting.
+**Backward Transfer (BWT)** - how much training new tasks hurt old ones. More negative = more forgetting.
 
-**Forgetting Measure (FM)** — average drop from peak accuracy per task. Lower is better.
+**Forgetting Measure (FM)** - average drop from peak accuracy per task. Lower is better.
 
 ---
 
