@@ -4,7 +4,7 @@ import torch
 def get_device() -> torch.device:
     """
     Returns the best available device.
-    On M4 MacBook: MPS (Metal Performance Shaders) — Apple Silicon GPU.
+    On Apple Silicon, this prefers MPS.
     Falls back to CUDA, then CPU.
     """
     if torch.backends.mps.is_available():

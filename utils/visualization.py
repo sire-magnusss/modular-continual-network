@@ -6,7 +6,7 @@ Saves plots to results/plots/.
 import os
 import numpy as np
 import matplotlib
-matplotlib.use("Agg")  # non-interactive backend — safe for all environments
+matplotlib.use("Agg")  # non-interactive backend
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
@@ -65,7 +65,7 @@ def _plot_accuracy_matrix(results, benchmark_name):
 
         fig.colorbar(im, ax=ax, label="Accuracy (%)")
 
-    fig.suptitle(f"Accuracy Matrix — {benchmark_name}", fontsize=14)
+    fig.suptitle(f"Accuracy Matrix - {benchmark_name}", fontsize=14)
     plt.tight_layout()
     path = os.path.join(RESULTS_DIR, f"{benchmark_name}_accuracy_matrix.png")
     plt.savefig(path, dpi=150, bbox_inches="tight")
@@ -104,7 +104,7 @@ def _plot_per_task_accuracy(results, benchmark_name):
         ax.grid(True, alpha=0.3)
         ax.legend(fontsize=8)
 
-    fig.suptitle(f"Per-Task Accuracy Over Training — {benchmark_name}", fontsize=13)
+    fig.suptitle(f"Per-Task Accuracy Over Training - {benchmark_name}", fontsize=13)
     plt.tight_layout()
     path = os.path.join(RESULTS_DIR, f"{benchmark_name}_per_task.png")
     plt.savefig(path, dpi=150, bbox_inches="tight")
@@ -128,7 +128,7 @@ def _plot_summary_bar(results, benchmark_name):
     ax.set_xticks(x)
     ax.set_xticklabels(method_names, fontsize=12)
     ax.set_ylabel("Value (%)")
-    ax.set_title(f"Summary Metrics — {benchmark_name}", fontsize=13)
+    ax.set_title(f"Summary Metrics - {benchmark_name}", fontsize=13)
     ax.legend()
     ax.axhline(0, color="black", linewidth=0.8)
     ax.grid(True, axis="y", alpha=0.3)

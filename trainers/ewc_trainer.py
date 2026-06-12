@@ -67,7 +67,7 @@ class EWCTrainer:
 
     def run(self, benchmark, tracker: MetricTracker):
         print("\n" + "="*60)
-        print(f"METHOD: EWC (λ={self.model.ewc_lambda})")
+        print(f"METHOD: EWC (lambda={self.model.ewc_lambda})")
         print("="*60)
 
         for task_id in range(benchmark.num_tasks):
