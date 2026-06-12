@@ -1,19 +1,4 @@
-"""
-MCN Trainer — with Adaptive Layer Freezing support
-----------------------------------------------------
-Task 0:
-  - Train ALL parameters at base_lr
-  - After training: freeze base_low, leave base_high adaptable
-
-Task t > 0:
-  - base_high params  at base_lr × adaptive_lr_scale  (slow drift OK)
-  - task module + router + head  at base_lr            (full plasticity)
-
-The two-group optimizer lets base_high slowly adapt to new task domains
-without aggressively forgetting Task 0 structure. The key insight is that
-high-level semantic representations need to shift for structurally different
-tasks (e.g., permuted MNIST), but should move slowly to preserve past learning.
-"""
+"""Trainer for MCN models and ablation variants."""
 
 import torch
 import torch.nn as nn
@@ -32,11 +17,7 @@ class MCNTrainer:
         self.model.to(device)
 
     def _build_optimizer(self, task_id: int) -> torch.optim.Optimizer:
-        """
-        Build optimizer with appropriate parameter groups.
-        Uses get_task_param_groups if available (MCN with adaptive freezing),
-        otherwise falls back to get_task_parameters (ablation variants).
-        """
+        """Build an optimizer for the current task."""
         if hasattr(self.model, "get_task_param_groups"):
             param_groups = self.model.get_task_param_groups(task_id, base_lr=self.lr)
         else:
@@ -52,7 +33,6 @@ class MCNTrainer:
         is_task_zero = not self.model._base_frozen
         prefix = "[MCN-T0]" if is_task_zero else f"[MCN-T{task_id}]"
 
-        # Show which lr groups are active this task
         if not is_task_zero and hasattr(self.model, "adaptive_lr_scale"):
             scale = self.model.adaptive_lr_scale
             print(f"  lr groups: base_high={self.lr * scale:.2e}  task={self.lr:.2e}")
@@ -81,11 +61,9 @@ class MCNTrainer:
             acc = correct / total
             print(f"  {prefix} Epoch {epoch+1}: loss={total_loss/total:.3f}  acc={acc*100:.1f}%")
 
-        # After Task 0, apply adaptive freezing
         if task_id == 0 and not self.model._base_frozen:
             self.model.freeze_base_encoder()
 
-        # Track how many tasks have been trained (enables task-free inference)
         if hasattr(self.model, '_num_trained'):
             self.model._num_trained = task_id + 1
 
@@ -109,11 +87,10 @@ class MCNTrainer:
 
         if hasattr(self.model, "param_count"):
             counts = self.model.param_count()
-            # Show split if adaptive freezing is present
             if "base_low" in counts:
                 print(f"  base_low  (frozen)   : {counts['base_low']:,} params")
                 print(f"  base_high (adaptive) : {counts['base_high']:,} params  "
-                      f"@ {getattr(self.model,'adaptive_lr_scale',1.0)}× lr")
+                      f"@ {getattr(self.model,'adaptive_lr_scale',1.0)}x lr")
             else:
                 print(f"  Base encoder params  : {counts['base_encoder']:,}")
             extra = ""
@@ -150,7 +127,6 @@ class MCNTrainer:
 
         tracker.print_matrix()
 
-        # Task-free evaluation (if model supports it)
         if hasattr(self.model, 'predict_task_free'):
             print("\n--- Task-Free Inference (entropy-based task selection) ---")
             correct_total = 0
