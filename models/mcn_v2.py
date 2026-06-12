@@ -249,14 +249,14 @@ class MCNv2(nn.Module):
                   f"Task modules + cross-attn get full plasticity.")
         else:
             print(f"[MCN-v2] base_low frozen ({low_p:,} params). "
-                  f"base_high adaptive ({high_p:,} params @ {self.adaptive_lr_scale}× lr).")
+                  f"base_high adaptive ({high_p:,} params @ {self.adaptive_lr_scale}x lr).")
 
     def freeze_task(self, task_id: int):
         """
         Freeze all components for a completed task.
-        Called by the trainer after each task completes.
-        The task module stays frozen but READABLE — future tasks
-        can query its outputs via cross-task attention.
+
+        Future tasks can still read the task module output through
+        cross-task attention.
         """
         for param in self.task_modules[task_id].parameters():
             param.requires_grad = False
@@ -291,7 +291,7 @@ class MCNv2(nn.Module):
                 {"params": task_params, "lr": base_lr, "name": "task_specific"},
             ]
 
-    # Backward-compatible alias
+    # Backward-compatible alias.
     def get_task_parameters(self, task_id: int):
         if not self._base_frozen:
             return list(self.parameters())
@@ -305,7 +305,7 @@ class MCNv2(nn.Module):
 
     @torch.no_grad()
     def predict_task_free(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Task-free inference via minimum entropy — same as MCN v1."""
+        """Task-free inference via minimum entropy."""
         self.eval()
         if self._num_trained == 0:
             raise RuntimeError("No tasks have been trained yet.")
