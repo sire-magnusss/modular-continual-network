@@ -194,13 +194,13 @@ class MCN(nn.Module):
                   f"Task modules get full plasticity.")
         else:
             print(f"[MCN] base_low frozen ({low_p:,} params). "
-                  f"base_high adaptive ({high_p:,} params @ {self.adaptive_lr_scale}× lr).")
+                  f"base_high adaptive ({high_p:,} params @ {self.adaptive_lr_scale}x lr).")
 
     def get_task_param_groups(self, task_id: int, base_lr: float) -> list:
         """
         Return optimizer parameter groups for training task_id.
 
-        Task 0: single group — everything at base_lr.
+        Task 0: single group at base_lr.
         Task t > 0: two groups:
           - base_high at base_lr * adaptive_lr_scale
           - task module, router, and head at base_lr
@@ -243,8 +243,8 @@ class MCN(nn.Module):
         (like MNIST digits across permutations), entropy discrimination degrades.
         For visually distinct tasks (CIFAR), entropy reliably picks the right task.
 
-        This moves MCN from task-incremental (task ID known at test time) toward
-        class-incremental evaluation — a harder, more realistic setting.
+        This approximates task-free evaluation by selecting a task head from
+        model confidence.
         """
         self.eval()
         if self._num_trained == 0:
