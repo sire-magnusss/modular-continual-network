@@ -1,29 +1,6 @@
-"""
-Split-CIFAR-100 Benchmark
---------------------------
-The hard standard benchmark in continual learning research.
+"""Split-CIFAR-100 benchmark."""
 
-CIFAR-100 has 100 classes. We split them into 20 tasks of 5 classes each:
-  Task 0:  classes 0-4
-  Task 1:  classes 5-9
-  ...
-  Task 19: classes 95-99
-
-Each task is a 5-way classification problem.
-With 500 training images per class × 5 classes = 2,500 training samples per task.
-
-Why this is harder than Split-CIFAR-10:
-  - 4× more tasks (20 vs 5) — forgetting compounds much more
-  - Finer-grained classes — more visually similar tasks
-  - Less data per task — harder to learn each task well
-  - The capacity problem for PackNet is severe: 20 tasks competing for fixed weights
-
-This is the benchmark where weak methods completely collapse and strong
-architecture choices are clearly separated.
-"""
-
-import os
-from typing import List, Tuple
+from typing import List
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
@@ -31,20 +8,11 @@ from torchvision import datasets, transforms
 CIFAR100_MEAN = (0.5071, 0.4867, 0.4408)
 CIFAR100_STD  = (0.2675, 0.2565, 0.2761)
 
-# 100 classes split into 20 tasks of 5 classes each
 TASK_CLASSES = [list(range(i * 5, (i + 1) * 5)) for i in range(20)]
 
 
 class SplitCIFAR100:
-    """
-    Provides train/test DataLoaders for each of 20 tasks in Split-CIFAR-100.
-
-    Usage:
-        benchmark = SplitCIFAR100(data_dir="./data")
-        for task_id in range(benchmark.num_tasks):
-            train_loader = benchmark.get_train_loader(task_id)
-            test_loader  = benchmark.get_test_loader(task_id)
-    """
+    """Build train/test loaders for twenty five-class CIFAR-100 tasks."""
 
     num_tasks = 20
     num_classes_per_task = 5

@@ -1,20 +1,4 @@
-"""
-Permuted MNIST Benchmark
--------------------------
-Each task is the full MNIST classification problem (10 classes, digits 0-9),
-but with a fixed random pixel permutation applied to the images.
-
-  Task 0: original MNIST (identity permutation)
-  Task 1: MNIST with permutation P1
-  Task 2: MNIST with permutation P2
-  ...
-
-Because the same network must learn completely different input distributions
-while keeping the same output structure, this is a very strong test of
-catastrophic forgetting.
-
-Typically run with 5 or 10 tasks.
-"""
+"""Permuted MNIST benchmark."""
 
 import numpy as np
 import torch
@@ -23,15 +7,7 @@ from torchvision import datasets, transforms
 
 
 class PermutedMNIST:
-    """
-    Provides train/test DataLoaders for each permuted task.
-
-    Usage:
-        benchmark = PermutedMNIST(num_tasks=5, data_dir="./data")
-        for task_id in range(benchmark.num_tasks):
-            train_loader = benchmark.get_train_loader(task_id)
-            test_loader  = benchmark.get_test_loader(task_id)
-    """
+    """Build train/test loaders for fixed pixel permutations of MNIST."""
 
     num_classes_per_task = 10
     input_shape = (1, 28, 28)
@@ -56,10 +32,9 @@ class PermutedMNIST:
             root=data_dir, train=False, download=True, transform=transform
         )
 
-        # Generate a fixed permutation per task (task 0 = identity)
         rng = np.random.RandomState(seed)
         n_pixels = 28 * 28
-        self._permutations = [np.arange(n_pixels)]  # task 0: no permutation
+        self._permutations = [np.arange(n_pixels)]
         for _ in range(num_tasks - 1):
             self._permutations.append(rng.permutation(n_pixels))
 
@@ -91,7 +66,7 @@ class _PermutedDataset(Dataset):
 
     def __getitem__(self, idx):
         img, label = self.base[idx]
-        # img shape: (1, 28, 28) — flatten, permute, reshape
+        # Flatten, permute, and restore the original image shape.
         flat = img.view(-1)
         flat = flat[self.perm]
         img = flat.view(img.shape)

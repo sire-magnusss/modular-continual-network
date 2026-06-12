@@ -165,9 +165,9 @@ def print_final_comparison(results: dict):
               f"{s['backward_transfer']*100:>9.1f}%"
               f"{s['forgetting_measure']*100:>11.1f}%")
     print()
-    print("Avg Acc    — higher is better (accuracy after all tasks)")
-    print("BWT        — less negative is better (negative = forgetting)")
-    print("Forgetting — lower is better (drop from peak accuracy)")
+    print("Avg Acc    - higher is better (accuracy after all tasks)")
+    print("BWT        - less negative is better (negative = forgetting)")
+    print("Forgetting - lower is better (drop from peak accuracy)")
 
 
 def main():
