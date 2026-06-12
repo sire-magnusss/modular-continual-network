@@ -1,42 +1,19 @@
-"""
-MCN Ablation Variants
-======================
-Three stripped-down versions of MCN used to prove each component earns its place.
-
-  mcn_no_router  — removes the attention router; just concatenates base + task features
-  mcn_no_gate    — removes the sigmoid gate from the task module (always-on contribution)
-  mcn_base_only  — no task module at all; frozen base encoder + task head only
-
-Running all four (mcn + these three) gives you the ablation table:
-  Component removed     | Avg Acc | Forgetting | Conclusion
-  ──────────────────────────────────────────────────────────
-  Nothing (full MCN)    |  86.5%  |    0.1%    | best
-  No Router             |   ???   |    ???     | does attention help?
-  No Gate               |   ???   |    ???     | does stable init help?
-  Base Only             |   ???   |    ???     | does the task module help?
-"""
+"""Ablation variants for MCN."""
 
 import torch
 import torch.nn as nn
 from models.mcn import MCN, TaskModule
 
 
-# ─── MCN without Router ───────────────────────────────────────────────────────
+# MCN without router
 
 class MCNNoRouter(MCN):
-    """
-    Removes the attention router. Instead of learned blending, just
-    concatenates base_feat and task_feat and projects to base_dim.
-
-    Tests: does the router's attention mechanism actually help,
-           or is simple concatenation enough?
-    """
+    """Replace the attention router with concat + linear projection."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Replace routers with simple linear projections
-        concat_dim = self.base_dim + 256  # base_dim + task_dim
+        concat_dim = self.base_dim + 256
         self.routers = nn.ModuleList([
             nn.Sequential(
                 nn.Linear(concat_dim, self.base_dim),
@@ -48,7 +25,6 @@ class MCNNoRouter(MCN):
     def forward(self, x: torch.Tensor, task_id: int) -> torch.Tensor:
         base_feat = self.base_high(self.base_low(x))
         task_feat = self.task_modules[task_id](x)
-        # Simple concat + project instead of attention
         blended = self.routers[task_id](torch.cat([base_feat, task_feat], dim=1))
         return self.heads[task_id](blended)
 
@@ -62,21 +38,14 @@ class MCNNoRouter(MCN):
         return params
 
 
-# ─── MCN without Gate ─────────────────────────────────────────────────────────
+# MCN without gate
 
 class MCNNoGate(MCN):
-    """
-    Removes the sigmoid gate from TaskModule.
-    The task module always contributes at full strength from the start.
-
-    Tests: does the gated initialization (module starts contributing near 0,
-           gradually opens) help training stability vs full contribution immediately?
-    """
+    """Use ungated task modules."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Replace task modules with ungated versions
         self.task_modules = nn.ModuleList([
             _UngatedTaskModule(
                 in_channels=self.in_channels,
@@ -88,7 +57,7 @@ class MCNNoGate(MCN):
 
 
 class _UngatedTaskModule(nn.Module):
-    """TaskModule with the sigmoid gate removed — always contributes at full strength."""
+    """TaskModule without the sigmoid gate."""
 
     def __init__(self, in_channels: int = 3, out_dim: int = 256,
                  input_size: int = 32):
@@ -116,22 +85,13 @@ class _UngatedTaskModule(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.fc(self.conv_blocks(x))  # no gate — full contribution always
+        return self.fc(self.conv_blocks(x))
 
 
-# ─── MCN Base Only ────────────────────────────────────────────────────────────
+# MCN base only
 
 class MCNBaseOnly(nn.Module):
-    """
-    No task module. No router. Just:
-      frozen base encoder → task-specific head
-
-    This is the lower bound: proves that task modules + router are
-    responsible for the accuracy gains over a plain frozen backbone.
-
-    If this performs poorly on new tasks → task modules are necessary.
-    If this performs well → the base encoder alone is sufficient (no need for MCN).
-    """
+    """Frozen base encoder with task-specific heads only."""
 
     def __init__(self, num_tasks: int, num_classes_per_task: int,
                  base_dim: int = 512, in_channels: int = 3, input_size: int = 32):
