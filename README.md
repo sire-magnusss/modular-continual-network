@@ -154,7 +154,7 @@ modular-continual-network/
 │   ├── hat_trainer.py          HAT with temperature annealing
 │   └── mcn_trainer.py          MCN trainer with task-free inference
 ├── paper/
-│   └── mcn_paper MAGNUS MAKGASANE.pdf  Full paper
+│   └── Modular Continual Network preprint by MAGNUS MAKGASANE.pdf  Full paper
 ├── utils/
 │   ├── device.py               MPS / CUDA / CPU detection
 │   ├── metrics.py              AA, BWT, Forgetting Measure
@@ -173,6 +173,15 @@ modular-continual-network/
 **Backward Transfer (BWT)** — how much training new tasks hurt old ones. More negative = more forgetting.
 
 **Forgetting Measure (FM)** — average drop from peak accuracy per task. Lower is better.
+
+---
+
+## Current Limitations
+
+- Headline results use task-incremental evaluation, where the task ID is known at test time.
+- Results are single-run experiments; multi-seed mean/std reporting is future work.
+- Model size grows linearly as new task modules are added.
+- Baseline implementations are research prototypes intended for comparison and study.
 
 ---
 
