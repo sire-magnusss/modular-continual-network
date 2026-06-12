@@ -191,7 +191,7 @@ class MCN(nn.Module):
         high_p = sum(p.numel() for p in self.base_high.parameters())
         if self.freeze_all:
             print(f"[MCN] Full base frozen ({low_p+high_p:,} params). "
-                  f"Task modules get full plasticity.")
+                  f"Training task-specific parameters only.")
         else:
             print(f"[MCN] base_low frozen ({low_p:,} params). "
                   f"base_high adaptive ({high_p:,} params @ {self.adaptive_lr_scale}x lr).")

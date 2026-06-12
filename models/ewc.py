@@ -63,7 +63,7 @@ class EWCModel(nn.Module):
 
         self.backbone.train()
         print(f"[EWC] Consolidated task {task_id} "
-              f"(λ={self.ewc_lambda}, {samples_seen} samples)")
+              f"(lambda={self.ewc_lambda}, {samples_seen} samples)")
 
     def ewc_penalty(self) -> torch.Tensor:
         """Return the accumulated EWC penalty."""
