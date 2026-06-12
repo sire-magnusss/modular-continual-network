@@ -45,14 +45,15 @@ Key design decisions:
      for easy tasks and lean on task-specific features for hard ones.
      The router is task-specific (one per task, trained alongside the module).
 
-  4. No masks, no Fisher matrices, no capacity limits. Adding a task = adding
-     ~400K parameters (module + router + head). The base encoder (~3.2M params)
-     is shared and frozen.
+  4. No masks, no Fisher matrices. MCN avoids a fixed shared-capacity ceiling
+     by growing capacity per task, at the cost of linear model growth. In the
+     CIFAR configuration, each new task adds ~1.47M parameters (module + router
+     + head), while the ~3.24M-parameter base encoder is shared and frozen.
 
 Why this beats PackNet:
   PackNet: 3 tasks on a 3.24M param network → each task gets ~1M params
-  MCN: base (3.2M frozen) + 3 task modules (400K each) = 4.4M total params
-  MCN gets more effective capacity per task, and zero cross-task interference.
+  MCN: base (~3.24M frozen) + per-task modules (~1.47M each) grows linearly.
+  MCN gets dedicated capacity per task, and avoids direct cross-task interference.
 
 Why this beats EWC:
   EWC: soft penalty that leaks. The larger λ, the worse new task learning.
