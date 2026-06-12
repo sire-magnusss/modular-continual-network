@@ -1,109 +1,34 @@
-"""
-Modular Continual Network (MCN)
-================================
-A novel continual learning architecture designed to eliminate the
-capacity-forgetting tradeoff by growing new modules per task instead
-of competing over fixed weights.
-
-Architecture
-------------
-                        ┌─────────────────────────┐
-    Input               │      Base Encoder        │  (frozen after Task 0)
-      │                 │   3 conv blocks → 512d   │
-      ├────────────────►│                          │──► base_feat (512d)
-      │                 └─────────────────────────┘
-      │
-      │                 ┌─────────────────────────┐
-      └────────────────►│  Task Module [task_id]  │──► task_feat (256d)
-                        │  Lightweight residual    │
-                        │  adapter (new per task)  │
-                        └─────────────────────────┘
-                                    │
-                        ┌─────────────────────────┐
-                        │       Router             │
-                        │  Attends over base_feat  │
-                        │  + task_feat → 512d out  │
-                        └─────────────────────────┘
-                                    │
-                        ┌─────────────────────────┐
-                        │   Task Head [task_id]    │──► logits
-                        └─────────────────────────┘
-
-Key design decisions:
-  1. Base encoder is trained on Task 0, then frozen. It learns general
-     low-level features (edges, textures) that transfer to all tasks.
-     Freezing it = zero forgetting of these shared representations.
-
-  2. Task modules are small (3x fewer params than base). Each new task
-     gets its own module — no competition, no forgetting by construction.
-     The module is a residual adapter: output = input + f(input), so if
-     f→0 (early training), the module passes through the base features.
-     This makes initialization stable.
-
-  3. Router is a 2-layer MLP that learns to blend base_feat and task_feat
-     using soft attention. This lets the network use base features heavily
-     for easy tasks and lean on task-specific features for hard ones.
-     The router is task-specific (one per task, trained alongside the module).
-
-  4. No masks, no Fisher matrices. MCN avoids a fixed shared-capacity ceiling
-     by growing capacity per task, at the cost of linear model growth. In the
-     CIFAR configuration, each new task adds ~1.47M parameters (module + router
-     + head), while the ~3.24M-parameter base encoder is shared and frozen.
-
-Why this beats PackNet:
-  PackNet: 3 tasks on a 3.24M param network → each task gets ~1M params
-  MCN: base (~3.24M frozen) + per-task modules (~1.47M each) grows linearly.
-  MCN gets dedicated capacity per task, and avoids direct cross-task interference.
-
-Why this beats EWC:
-  EWC: soft penalty that leaks. The larger λ, the worse new task learning.
-  MCN: hard isolation by architecture. No tradeoff parameter to tune.
-
-Research question this tests:
-  "Can we achieve near-zero forgetting without sacrificing new task plasticity,
-   by growing module capacity instead of compressing fixed capacity?"
-"""
+"""Modular Continual Network model definitions."""
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 
-# ─── Task Module ─────────────────────────────────────────────────────────────
+# Task module
 
 class TaskModule(nn.Module):
-    """
-    Lightweight residual adapter for one task.
-
-    Takes the raw input (same as base encoder input) and produces a
-    task-specific feature vector that complements the base encoder's output.
-
-    Architecture: 2-block conv net with skip connection, outputs 256-dim.
-    Deliberately smaller than base encoder to keep parameter count low.
-    """
+    """Task-specific CNN adapter that outputs a feature vector."""
 
     def __init__(self, in_channels: int = 3, out_dim: int = 256,
                  input_size: int = 32):
         super().__init__()
 
-        # 3 maxpools: 32 → 4, 28 → 3  (keeps FC layer small)
+        # Three max-pools reduce 32x32 to 4x4 and 28x28 to 3x3.
         pooled_size = input_size // 8
 
         self.conv_blocks = nn.Sequential(
-            # Block 1: lightweight — 32 channels
             nn.Conv2d(in_channels, 32, kernel_size=3, padding=1),
             nn.BatchNorm2d(32),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2, 2),
 
-            # Block 2: 64 channels
             nn.Conv2d(32, 64, kernel_size=3, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2, 2),
 
-            # Block 3: keep 64 channels, reduce spatial further
             nn.Conv2d(64, 64, kernel_size=3, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
@@ -120,40 +45,24 @@ class TaskModule(nn.Module):
             nn.ReLU(inplace=True),
         )
 
-        # Gate initialized to -3 so sigmoid(-3) ≈ 0.05:
-        # module starts contributing almost nothing, opens up as task-specific
-        # gradients push it. This prevents the unfrozen task module from
-        # destabilizing the frozen base encoder's output early in training.
+        # Start the adapter contribution small and let training open it.
         self.gate = nn.Parameter(torch.tensor([-3.0]))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         feat = self.fc(self.conv_blocks(x))
-        # Sigmoid gate: starts ~0.05, gradually opens toward 1.0
         return feat * torch.sigmoid(self.gate)
 
 
-# ─── Router ──────────────────────────────────────────────────────────────────
+# Router
 
 class Router(nn.Module):
-    """
-    Blends base encoder features and task module features using learned attention.
-
-    Inputs:  base_feat (512d) + task_feat (256d) → concat (768d)
-    Output:  blended feature (512d)
-
-    The router is task-specific — each task gets its own router.
-    This lets the network learn different blending strategies per task:
-    some tasks may rely almost entirely on base features (simple tasks),
-    others heavily on the task module (complex or very different tasks).
-    """
+    """Blend base and task-specific features with learned attention."""
 
     def __init__(self, base_dim: int = 512, task_dim: int = 256,
                  out_dim: int = 512):
         super().__init__()
         concat_dim = base_dim + task_dim
 
-        # Per-sample attention: learns which stream to trust based on the
-        # actual content of that sample's features (not a fixed scalar)
         self.attn = nn.Sequential(
             nn.Linear(concat_dim, 128),
             nn.ReLU(inplace=True),
@@ -161,11 +70,9 @@ class Router(nn.Module):
             nn.Softmax(dim=1),
         )
 
-        # Projection layers: bring both streams to out_dim before blending
         self.base_proj = nn.Linear(base_dim, out_dim)
         self.task_proj = nn.Linear(task_dim, out_dim)
 
-        # Final fusion layer: takes weighted-sum features → out_dim
         self.fusion = nn.Sequential(
             nn.Linear(out_dim, out_dim),
             nn.ReLU(inplace=True),
@@ -175,48 +82,21 @@ class Router(nn.Module):
                 task_feat: torch.Tensor) -> torch.Tensor:
         concat = torch.cat([base_feat, task_feat], dim=1)
 
-        # Per-sample attention weights (B, 2)
         weights = self.attn(concat)
-        w_base = weights[:, 0:1]   # (B, 1)
-        w_task = weights[:, 1:2]   # (B, 1)
+        w_base = weights[:, 0:1]
+        w_task = weights[:, 1:2]
 
-        # Project both streams to the same dim, then weighted sum
-        base_p = self.base_proj(base_feat)   # (B, out_dim)
-        task_p = self.task_proj(task_feat)   # (B, out_dim)
+        base_p = self.base_proj(base_feat)
+        task_p = self.task_proj(task_feat)
         blended = w_base * base_p + w_task * task_p
 
-        # Residual fusion: blend + skip from base projection
         return self.fusion(blended) + base_p
 
 
-# ─── MCN Main Model ──────────────────────────────────────────────────────────
+# MCN model
 
 class MCN(nn.Module):
-    """
-    Modular Continual Network — with Adaptive Layer Freezing.
-
-    The base encoder is split into two parts:
-      base_low  (Block 1+2): learns edges and textures → permanently frozen after Task 0.
-                              These features transfer to ALL tasks — no reason to change them.
-      base_high (Block 3+FC): learns shapes and semantic structure → kept adaptable.
-                              New tasks train this at a reduced lr (adaptive_lr_scale × lr),
-                              allowing high-level representations to shift for new domains
-                              without destroying low-level feature reuse.
-
-    Why this fixes the MNIST gap:
-      Permuted MNIST has identical high-level structure (digit shapes) but completely
-      different spatial layout per task. The fully-frozen base encoder couldn't adapt its
-      high-level semantic representations — base_high adaption fixes this.
-      CIFAR-10 tasks (different object classes) benefit less but are not hurt because
-      base_high lr is small (0.1×), so Task 0 knowledge degrades slowly.
-
-    Architecture:
-      base_low  → Block 1+2 (in→128ch, 2 maxpools)        [frozen after T0]
-      base_high → Block 3 + FC (128→256ch + Linear→512d)  [adaptive, low lr]
-      task_module[t] → lightweight CNN adapter              [full lr]
-      router[t]      → attention blender                   [full lr]
-      head[t]        → linear classifier                   [full lr]
-    """
+    """Base encoder plus task-specific adapters, routers, and heads."""
 
     def __init__(self, num_tasks: int, num_classes_per_task: int,
                  base_dim: int = 512, task_dim: int = 256,
@@ -232,14 +112,11 @@ class MCN(nn.Module):
         self.in_channels = in_channels
         self.input_size = input_size
         self.adaptive_lr_scale = adaptive_lr_scale
-        self.freeze_all = freeze_all  # if True: freeze entire base after T0 (original behaviour)
+        self.freeze_all = freeze_all
 
-        pooled = input_size // 8  # after 3 maxpools: 32→4, 28→3
+        pooled = input_size // 8
 
-        # ── Low-level base (frozen after Task 0) ──────────────────────────
-        # Block 1: in_channels → 64ch, spatial / 2
-        # Block 2: 64 → 128ch, spatial / 2
-        # Learns edges, colour blobs, simple textures — universal features.
+        # Low-level base, frozen after Task 0.
         self.base_low = nn.Sequential(
             nn.Conv2d(in_channels, 64, kernel_size=3, padding=1),
             nn.BatchNorm2d(64),
@@ -258,10 +135,7 @@ class MCN(nn.Module):
             nn.MaxPool2d(2, 2),
         )
 
-        # ── High-level base (adaptive after Task 0, small lr) ─────────────
-        # Block 3: 128 → 256ch, spatial / 2
-        # FC: 256 * pooled * pooled → base_dim
-        # Learns object-level semantics — task-specific enough to benefit from adaptation.
+        # High-level base. It is either frozen or trained with a reduced LR.
         self.base_high = nn.Sequential(
             nn.Conv2d(128, 256, kernel_size=3, padding=1),
             nn.BatchNorm2d(256),
@@ -276,7 +150,6 @@ class MCN(nn.Module):
             nn.Dropout(0.3),
         )
 
-        # ── Per-task components ────────────────────────────────────────────
         self.task_modules = nn.ModuleList([
             TaskModule(in_channels, task_dim, input_size)
             for _ in range(num_tasks)
@@ -303,10 +176,10 @@ class MCN(nn.Module):
 
     def freeze_base_encoder(self):
         """
-        After Task 0:
-          freeze_all=True  → freeze entire base encoder (best for diverse tasks like CIFAR-10).
-          freeze_all=False → freeze only base_low; base_high trains at adaptive_lr_scale × lr
-                             (helps when tasks share structure but differ in high-level layout).
+        Freeze the base after Task 0.
+
+        If freeze_all is false, base_high remains trainable at a reduced
+        learning rate through get_task_param_groups().
         """
         for param in self.base_low.parameters():
             param.requires_grad = False
@@ -329,8 +202,8 @@ class MCN(nn.Module):
 
         Task 0: single group — everything at base_lr.
         Task t > 0: two groups:
-          - base_high at base_lr × adaptive_lr_scale  (slow adaptation)
-          - task module + router + head at base_lr     (full speed)
+          - base_high at base_lr * adaptive_lr_scale
+          - task module, router, and head at base_lr
         """
         if not self._base_frozen:
             return [{"params": list(self.parameters()), "lr": base_lr, "name": "all"}]
@@ -340,17 +213,15 @@ class MCN(nn.Module):
                        list(self.heads[task_id].parameters()))
 
         if self.freeze_all:
-            # base fully frozen — only task-specific params
             return [{"params": task_params, "lr": base_lr, "name": "task_specific"}]
         else:
-            # adaptive: base_high at slow lr, task components at full lr
             return [
                 {"params": list(self.base_high.parameters()),
                  "lr": base_lr * self.adaptive_lr_scale, "name": "base_high"},
                 {"params": task_params, "lr": base_lr, "name": "task_specific"},
             ]
 
-    # Keep backward-compatible alias used by ablation variants
+    # Backward-compatible alias used by ablation variants.
     def get_task_parameters(self, task_id: int):
         if not self._base_frozen:
             return list(self.parameters())
@@ -364,11 +235,10 @@ class MCN(nn.Module):
         """
         Task-free inference: predict class label without knowing the task ID.
 
-        Runs forward pass through all trained task heads and picks the task
-        whose predictions have the LOWEST Shannon entropy (highest confidence).
+        Run all trained task heads and choose the lowest-entropy prediction.
         Returns per-sample (predicted_label, predicted_task_id).
 
-        Complexity: O(T) forward passes — acceptable at inference time.
+        Complexity is O(T) forward passes.
         Accuracy depends on task separation: if two tasks have similar inputs
         (like MNIST digits across permutations), entropy discrimination degrades.
         For visually distinct tasks (CIFAR), entropy reliably picks the right task.
@@ -384,18 +254,15 @@ class MCN(nn.Module):
         all_entropies: List[torch.Tensor] = []
 
         for t in range(self._num_trained):
-            logits = self.forward(x, task_id=t)      # (B, C_t)
-            probs = F.softmax(logits, dim=1)          # (B, C_t)
-            # Shannon entropy per sample
-            entropy = -(probs * (probs + 1e-8).log()).sum(dim=1)  # (B,)
+            logits = self.forward(x, task_id=t)
+            probs = F.softmax(logits, dim=1)
+            entropy = -(probs * (probs + 1e-8).log()).sum(dim=1)
             all_logits.append(logits)
             all_entropies.append(entropy)
 
-        # Stack: (B, T) — pick task with minimum entropy (maximum confidence)
-        entropies = torch.stack(all_entropies, dim=1)   # (B, T)
-        best_task_ids = entropies.argmin(dim=1)          # (B,)
+        entropies = torch.stack(all_entropies, dim=1)
+        best_task_ids = entropies.argmin(dim=1)
 
-        # Gather the predicted class for each sample from the chosen task
         B = x.size(0)
         predicted_labels = torch.stack([
             all_logits[best_task_ids[i].item()][i].argmax()
