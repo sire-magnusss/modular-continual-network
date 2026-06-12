@@ -2,9 +2,13 @@
 
 A novel neural network architecture for continual learning that achieves near-zero catastrophic forgetting by growing dedicated modular capacity per task — instead of competing over a fixed set of weights.
 
+These results are from task-incremental experiments where task identity is known at inference time.
+
 ---
 
 ## Results
+
+Reported results are deterministic single-run measurements; multi-seed mean/std evaluation and stronger baseline tuning are future work.
 
 ### Split-CIFAR-10 — 5 Tasks
 
@@ -83,7 +87,7 @@ Input ──► base_low  [frozen after Task 0]  ──► base_high ──► b
 - **EWC** adds a soft penalty to protect important weights — but the penalty accumulates across tasks and eventually chokes new learning. At 20 tasks on CIFAR-100 it drops to 66% accuracy.
 - **PackNet** uses hard binary masks per task — zero forgetting by construction, but the network physically runs out of free parameters. It collapses to 56% at 20 tasks.
 - **HAT** learns which capacity to allocate via gradient — smarter than PackNet, but still hits the same fixed-capacity wall.
-- **MCN** has no capacity limit. Each new CIFAR task adds ~1.47M parameters in the current implementation. No competition, no wall.
+- **MCN** avoids a fixed shared-capacity ceiling by growing capacity per task, at the cost of linear model growth. Each new task adds approximately 1.47M parameters in the CIFAR configuration.
 
 ---
 
