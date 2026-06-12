@@ -1,10 +1,4 @@
-"""
-EWC Trainer
-------------
-Trains with Elastic Weight Consolidation regularization.
-After each task, consolidates Fisher Information and applies penalty
-to subsequent tasks' loss functions.
-"""
+"""Trainer for the EWC baseline."""
 
 import torch
 import torch.nn as nn
@@ -81,7 +75,6 @@ class EWCTrainer:
             train_loader = benchmark.get_train_loader(task_id)
             self.train_task(task_id, train_loader)
 
-            # Consolidate Fisher for this task before moving on
             self.model.consolidate(task_id, train_loader, self.device)
 
             print(f"  Evaluating all tasks after training task {task_id}...")
