@@ -83,7 +83,7 @@ Input ──► base_low  [frozen after Task 0]  ──► base_high ──► b
 - **EWC** adds a soft penalty to protect important weights — but the penalty accumulates across tasks and eventually chokes new learning. At 20 tasks on CIFAR-100 it drops to 66% accuracy.
 - **PackNet** uses hard binary masks per task — zero forgetting by construction, but the network physically runs out of free parameters. It collapses to 56% at 20 tasks.
 - **HAT** learns which capacity to allocate via gradient — smarter than PackNet, but still hits the same fixed-capacity wall.
-- **MCN** has no capacity limit. Each new task adds ~700K parameters. No competition, no wall.
+- **MCN** has no capacity limit. Each new CIFAR task adds ~1.47M parameters in the current implementation. No competition, no wall.
 
 ---
 
