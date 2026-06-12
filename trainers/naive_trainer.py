@@ -1,13 +1,4 @@
-"""
-Naive Sequential Trainer
--------------------------
-Just trains on each task one at a time with standard SGD/Adam.
-No mechanism to prevent forgetting.
-
-This is your baseline that WILL catastrophically forget.
-You'll see Task 0 accuracy collapse to near-random after training Task 1.
-That collapse is the problem everything else is trying to solve.
-"""
+"""Naive sequential training baseline."""
 
 import torch
 import torch.nn as nn
@@ -77,7 +68,6 @@ class NaiveTrainer:
             train_loader = benchmark.get_train_loader(task_id)
             self.train_task(task_id, train_loader)
 
-            # Evaluate on ALL tasks seen so far
             print(f"  Evaluating all tasks after training task {task_id}...")
             for eval_task in range(task_id + 1):
                 test_loader = benchmark.get_test_loader(eval_task)
