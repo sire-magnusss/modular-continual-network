@@ -1,27 +1,4 @@
-"""
-HAT Trainer
------------
-Implements the HAT training loop with:
-  1. Temperature annealing within each epoch (s: s_low → s_max)
-  2. HAT regularization loss added to cross-entropy
-  3. Gradient compensation after backward (protecting previous task neurons)
-  4. Task completion cleanup (clip embeddings to binary)
-
-Temperature schedule:
-  Within each epoch, s is annealed linearly from s_max/100 → s_max
-  across the batches. This gives the model time to explore soft masks at
-  the start of training before committing to hard binary masks by the end.
-  Over multiple epochs this creates a curriculum: early epochs explore,
-  late epochs commit.
-
-The key HAT loop (per batch):
-  1. Compute s for this step (linear within epoch)
-  2. Forward pass with current s → soft masks
-  3. CE loss + HAT regularization
-  4. Backward
-  5. Gradient compensation (scale embedding grads by 1 - cumulative mask)
-  6. Optimizer step
-"""
+"""Trainer for HAT models."""
 
 import torch
 import torch.nn as nn
@@ -35,10 +12,6 @@ class HATTrainer:
     def __init__(self, model, device: torch.device,
                  lr: float = 1e-3, epochs_per_task: int = 5,
                  hat_c: float = 0.75):
-        """
-        Args:
-            hat_c: regularization coefficient for HAT penalty (default 0.75)
-        """
         self.model = model
         self.device = device
         self.lr = lr
@@ -47,13 +20,8 @@ class HATTrainer:
         self.model.to(device)
 
     def _get_s(self, batch_idx: int, total_batches: int, epoch: int) -> float:
-        """
-        Temperature schedule: linear ramp from s_low → s_max within each epoch.
-        Across epochs, the full ramp happens each epoch (not cumulative).
-        This ensures early epochs still explore (start low), late epochs commit.
-        """
+        """Linear temperature ramp within each epoch."""
         s_low = self.model.s_max / 100.0
-        # Progress within current epoch: 0.0 → 1.0
         progress = batch_idx / max(total_batches - 1, 1)
         return s_low + (self.model.s_max - s_low) * progress
 
@@ -81,24 +49,19 @@ class HATTrainer:
             for batch_idx, (x, y) in pbar:
                 x, y = x.to(self.device), y.to(self.device)
 
-                # Temperature for this batch
                 s = self._get_s(batch_idx, total_batches, epoch)
 
                 optimizer.zero_grad()
 
-                # Forward with temperature s → soft masks
                 logits = self.model(x, task_id, s=s)
                 ce_loss = criterion(logits, y)
 
-                # HAT regularization: penalize reusing past capacity
                 current_masks = self.model.get_masks(task_id, s)
                 reg_loss = self.model.hat_regularization(task_id, current_masks, c=self.hat_c)
 
                 loss = ce_loss + reg_loss
                 loss.backward()
 
-                # Gradient compensation: scale embedding grads by (1 - cumulative mask)
-                # This prevents the optimizer from modifying neurons claimed by past tasks
                 self.model.compensate_gradients(task_id, current_masks)
 
                 optimizer.step()
@@ -119,7 +82,6 @@ class HATTrainer:
                   f"loss={avg_loss:.3f}  ce={total_ce/total:.3f}  "
                   f"reg={avg_reg:.4f}  acc={acc*100:.1f}%  s={s:.0f}")
 
-        # After training: clip embeddings to binary range, update trained_tasks count
         self.model.complete_task(task_id)
 
     @torch.no_grad()
@@ -129,7 +91,6 @@ class HATTrainer:
         total = 0
         for x, y in test_loader:
             x, y = x.to(self.device), y.to(self.device)
-            # Test with s_max → near-binary masks
             logits = self.model(x, task_id)
             correct += (logits.argmax(1) == y).sum().item()
             total += x.size(0)

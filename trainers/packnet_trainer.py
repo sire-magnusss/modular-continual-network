@@ -1,12 +1,4 @@
-"""
-PackNet Trainer
-----------------
-Two-phase training per task:
-  Phase 1: Train all free weights normally
-  Phase 2: Prune + re-train only the freed (pruned) weights
-
-After phase 2, surviving weights from phase 1 are frozen permanently.
-"""
+"""Trainer for the PackNet baseline."""
 
 import torch
 import torch.nn as nn
@@ -51,11 +43,9 @@ class PackNetTrainer:
                 loss = criterion(logits, y)
                 loss.backward()
 
-                # Zero gradients on frozen weights before optimizer step
                 self.model.freeze_gradients()
                 optimizer.step()
 
-                # Enforce masks: zero out frozen weights in case of numerical drift
                 self.model.apply_masks()
 
                 total_loss += loss.item() * x.size(0)
@@ -70,16 +60,13 @@ class PackNetTrainer:
     def train_task(self, task_id: int, train_loader: DataLoader):
         self._move_masks_to_device()
 
-        # Phase 1: Train all free weights
         print(f"  Phase 1: Training free weights...")
         all_params = list(self.model.backbone.parameters())
         opt1 = torch.optim.Adam(all_params, lr=self.lr)
         self._train_phase(task_id, train_loader, opt1, self.epochs_phase1, "Phase1")
 
-        # Prune and freeze — assign top weights to this task
         self.model.prune_and_freeze(task_id)
 
-        # Phase 2: Retrain only the newly-freed (pruned) weights
         print(f"  Phase 2: Retraining pruned weights only...")
         free_params = [p for _, p in self.model.get_free_parameters()]
         if free_params:

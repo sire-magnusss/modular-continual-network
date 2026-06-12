@@ -1,36 +1,19 @@
-"""
-Split-CIFAR-10 Benchmark
-------------------------
-CIFAR-10 has 10 classes. We split them into 5 tasks of 2 classes each:
-  Task 0: airplane (0), automobile (1)
-  Task 1: bird (2),     cat (3)
-  Task 2: deer (4),     dog (5)
-  Task 3: frog (6),     horse (7)
-  Task 4: ship (8),     truck (9)
+"""Split-CIFAR-10 benchmark."""
 
-Each task is a binary classification problem (classes 0 and 1 within that task).
-The model head outputs 2 logits per task.
-
-This is the standard benchmark for demonstrating catastrophic forgetting.
-"""
-
-import os
-from typing import Tuple, List
-from torch.utils.data import DataLoader, Subset
+from typing import List, Tuple
+from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
 
-# Standard CIFAR-10 normalization
 CIFAR10_MEAN = (0.4914, 0.4822, 0.4465)
 CIFAR10_STD  = (0.2023, 0.1994, 0.2010)
 
-# 5 tasks, 2 original CIFAR-10 classes each
 TASK_CLASSES = [
-    [0, 1],  # Task 0: airplane, automobile
-    [2, 3],  # Task 1: bird, cat
-    [4, 5],  # Task 2: deer, dog
-    [6, 7],  # Task 3: frog, horse
-    [8, 9],  # Task 4: ship, truck
+    [0, 1],
+    [2, 3],
+    [4, 5],
+    [6, 7],
+    [8, 9],
 ]
 
 CLASS_NAMES = [
@@ -40,15 +23,7 @@ CLASS_NAMES = [
 
 
 class SplitCIFAR10:
-    """
-    Provides train/test DataLoaders for each task in Split-CIFAR-10.
-
-    Usage:
-        benchmark = SplitCIFAR10(data_dir="./data")
-        for task_id in range(benchmark.num_tasks):
-            train_loader = benchmark.get_train_loader(task_id)
-            test_loader  = benchmark.get_test_loader(task_id)
-    """
+    """Build train/test loaders for five two-class CIFAR-10 tasks."""
 
     num_tasks = 5
     num_classes_per_task = 2
