@@ -1,29 +1,10 @@
-"""
-Continual Learning Architecture — Main Experiment Runner
-==========================================================
-
-Usage:
-    python main.py                          # default: all methods on Split-CIFAR-10
-    python main.py --benchmark mnist        # use Permuted MNIST instead
-    python main.py --methods naive ewc      # run only specific methods
-    python main.py --epochs 10              # more epochs per task
-    python main.py --tasks 3               # only 3 tasks (faster for testing)
-
-What you'll see:
-    After training on each task, we evaluate all previously seen tasks.
-    Watch the Naive method forget Task 0 once Task 1 training starts.
-    Compare EWC and PackNet's ability to retain old knowledge.
-
-Output:
-    - Console: accuracy matrix, metrics
-    - results/plots/: PNG plots comparing all methods
-"""
+"""Command-line runner for continual-learning experiments."""
 
 import argparse
 import sys
 import os
 
-# Make sure project root is on the path
+# Allow direct execution from the repository root.
 sys.path.insert(0, os.path.dirname(__file__))
 
 import torch
