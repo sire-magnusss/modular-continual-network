@@ -1,6 +1,6 @@
 # Modular Continual Network (MCN)
 
-A novel neural network architecture for continual learning that achieves near-zero catastrophic forgetting by growing dedicated modular capacity per task — instead of competing over a fixed set of weights.
+PyTorch experiments for a modular continual-learning model that grows task-specific capacity instead of training every task through the same shared weights.
 
 These results are from task-incremental experiments where task identity is known at inference time.
 
@@ -10,19 +10,19 @@ These results are from task-incremental experiments where task identity is known
 
 Reported results are deterministic single-run measurements; multi-seed mean/std evaluation and stronger baseline tuning are future work.
 
-### Split-CIFAR-10 — 5 Tasks
+### Split-CIFAR-10 - 5 Tasks
 
 ![CIFAR-10 Summary](results/plots/SplitCIFAR10_summary.png)
 
 ![CIFAR-10 Accuracy Matrix](results/plots/SplitCIFAR10_accuracy_matrix.png)
 
-### Split-CIFAR-100 — 20 Tasks (Hard Benchmark)
+### Split-CIFAR-100 - 20 Tasks
 
 ![CIFAR-100 Summary](results/plots/SplitCIFAR100_summary.png)
 
 ![CIFAR-100 Accuracy Matrix](results/plots/SplitCIFAR100_accuracy_matrix.png)
 
-### Permuted MNIST — 5 Tasks
+### Permuted MNIST - 5 Tasks
 
 ![MNIST Summary](results/plots/PermutedMNIST_summary.png)
 
@@ -60,34 +60,20 @@ Reported results are deterministic single-run measurements; multi-seed mean/std 
 | MCN (ours) | 95.9% | 1.2% |
 | EWC | **96.8%** | **1.0%** |
 
-> On Permuted MNIST, EWC is competitive — tasks are structurally identical (all digit images), so soft regularization is sufficient. MCN's advantage is clearest on visually diverse tasks.
+> On Permuted MNIST, EWC is competitive because the tasks share the same digit structure. MCN's strongest results are on the CIFAR task splits.
 
 ---
 
 ## How It Works
 
-```
-Input ──► base_low  [frozen after Task 0]  ──► base_high ──► base_feat (512d)
-    │      Blocks 1+2: edges & textures          Block 3+FC         │
-    │                                                                │
-    └──► TaskModule[t] ──────────────────────────► task_feat ───────┤
-          Lightweight CNN adapter (new per task)      (256d)         │
-                                                                     ▼
-                                                               Router[t]
-                                                          (per-sample attention)
-                                                                     │
-                                                                     ▼
-                                                              Head[t] → logits
-```
+MCN uses four pieces:
 
-**The core idea** is simple: instead of all tasks fighting over the same weights (which causes forgetting), each new task gets its own dedicated module. The base encoder trains on Task 0 and then freezes — those representations never degrade. New tasks grow their own capacity and can never touch old weights.
+- A base encoder trained on Task 0 and then frozen.
+- A task-specific CNN adapter for each task.
+- A task-specific router that blends base and adapter features.
+- A task-specific output head.
 
-**Why it beats the alternatives:**
-
-- **EWC** adds a soft penalty to protect important weights — but the penalty accumulates across tasks and eventually chokes new learning. At 20 tasks on CIFAR-100 it drops to 66% accuracy.
-- **PackNet** uses hard binary masks per task — zero forgetting by construction, but the network physically runs out of free parameters. It collapses to 56% at 20 tasks.
-- **HAT** learns which capacity to allocate via gradient — smarter than PackNet, but still hits the same fixed-capacity wall.
-- **MCN** avoids a fixed shared-capacity ceiling by growing capacity per task, at the cost of linear model growth. Each new task adds approximately 1.47M parameters in the CIFAR configuration.
+This avoids a fixed shared-capacity ceiling by growing capacity per task, at the cost of linear model growth. Each new task adds approximately 1.47M parameters in the CIFAR configuration.
 
 ---
 
@@ -120,7 +106,7 @@ pip install -r requirements.txt
 # All methods on Split-CIFAR-10
 python main.py --benchmark cifar10 --methods naive ewc packnet hat mcn --epochs 10
 
-# The hard benchmark — 20 tasks on CIFAR-100
+# 20 tasks on CIFAR-100
 python main.py --benchmark cifar100 --methods naive ewc packnet mcn --epochs 10
 
 # Permuted MNIST
@@ -137,36 +123,13 @@ python main.py --methods mcn mcn_no_router mcn_no_gate mcn_base_only --tasks 3 -
 
 ## Project Structure
 
-```
-modular-continual-network/
-├── benchmarks/
-│   ├── split_cifar10.py        5-task CIFAR-10
-│   ├── split_cifar100.py       20-task CIFAR-100
-│   └── permuted_mnist.py       5-task Permuted MNIST
-├── models/
-│   ├── backbone.py             CNN/MLP backbones for baselines
-│   ├── ewc.py                  Elastic Weight Consolidation
-│   ├── packnet.py              PackNet (prune & freeze)
-│   ├── hat.py                  HAT (hard attention to task)
-│   ├── mcn.py                  Modular Continual Network (ours)
-│   ├── mcn_v2.py               MCN v2 with cross-task attention
-│   └── mcn_ablations.py        MCN ablation variants
-├── trainers/
-│   ├── naive_trainer.py        Sequential SGD baseline
-│   ├── ewc_trainer.py          EWC training loop
-│   ├── packnet_trainer.py      PackNet two-phase training
-│   ├── hat_trainer.py          HAT with temperature annealing
-│   └── mcn_trainer.py          MCN trainer with task-free inference
-├── paper/
-│   └── Modular Continual Network preprint by MAGNUS MAKGASANE.pdf  Full paper
-├── utils/
-│   ├── device.py               MPS / CUDA / CPU detection
-│   ├── metrics.py              AA, BWT, Forgetting Measure
-│   └── visualization.py        Result plots
-├── results/
-│   └── plots/                  Generated PNG plots
-└── main.py                     CLI experiment runner
-```
+- `benchmarks/`: Split-CIFAR-10, Split-CIFAR-100, and Permuted MNIST loaders.
+- `models/`: MCN, MCN v2, ablations, and baseline models.
+- `trainers/`: training loops for each method.
+- `utils/`: device selection, metrics, and plotting.
+- `results/`: saved logs and generated plots.
+- `paper/`: compiled preprint PDF.
+- `main.py`: command-line experiment runner.
 
 ---
 
