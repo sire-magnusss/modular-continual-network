@@ -5,15 +5,18 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from utils.metrics import MetricTracker
+from utils.evaluation import evaluate_task_free
 
 
 class MCNTrainer:
     def __init__(self, model, device: torch.device,
-                 lr: float = 1e-3, epochs_per_task: int = 5):
+                 lr: float = 1e-3, epochs_per_task: int = 5,
+                 task_free: bool = False):
         self.model = model
         self.device = device
         self.lr = lr
         self.epochs_per_task = epochs_per_task
+        self.task_free = task_free
         self.model.to(device)
 
     def _build_optimizer(self, task_id: int) -> torch.optim.Optimizer:
@@ -33,9 +36,8 @@ class MCNTrainer:
         is_task_zero = not self.model._base_frozen
         prefix = "[MCN-T0]" if is_task_zero else f"[MCN-T{task_id}]"
 
-        if not is_task_zero and hasattr(self.model, "adaptive_lr_scale"):
-            scale = self.model.adaptive_lr_scale
-            print(f"  lr groups: base_high={self.lr * scale:.2e}  task={self.lr:.2e}")
+        for group in optimizer.param_groups:
+            print(f"  lr group {group.get('name', 'task_specific')}: {group['lr']:.2e}")
 
         for epoch in range(self.epochs_per_task):
             total_loss = 0.0
@@ -61,11 +63,7 @@ class MCNTrainer:
             acc = correct / total
             print(f"  {prefix} Epoch {epoch+1}: loss={total_loss/total:.3f}  acc={acc*100:.1f}%")
 
-        if task_id == 0 and not self.model._base_frozen:
-            self.model.freeze_base_encoder()
-
-        if hasattr(self.model, '_num_trained'):
-            self.model._num_trained = task_id + 1
+        self.model.complete_task(task_id)
 
     @torch.no_grad()
     def evaluate(self, task_id: int, test_loader: DataLoader) -> float:
@@ -88,9 +86,9 @@ class MCNTrainer:
         if hasattr(self.model, "param_count"):
             counts = self.model.param_count()
             if "base_low" in counts:
-                print(f"  base_low  (frozen)   : {counts['base_low']:,} params")
-                print(f"  base_high (adaptive) : {counts['base_high']:,} params  "
-                      f"@ {getattr(self.model,'adaptive_lr_scale',1.0)}x lr")
+                print(f"  base_low: {counts['base_low']:,} params")
+                print(f"  base_high: {counts['base_high']:,} params")
+                print(f"  After Task 0: full base frozen = {self.model.freeze_all}")
             else:
                 print(f"  Base encoder params  : {counts['base_encoder']:,}")
             extra = ""
@@ -111,8 +109,7 @@ class MCNTrainer:
             if task_id == 0:
                 print(f"  [Task 0] Training full network")
             else:
-                print(f"  [Task {task_id}] task module + router + head (full lr) "
-                      f"+ base_high (adaptive lr)")
+                print(f"  [Task {task_id}] Training current task parameters")
 
             train_loader = benchmark.get_train_loader(task_id)
             self.train_task(task_id, train_loader)
@@ -127,24 +124,12 @@ class MCNTrainer:
 
         tracker.print_matrix()
 
-        if hasattr(self.model, 'predict_task_free'):
+        if self.task_free and hasattr(self.model, 'predict_task_free'):
             print("\n--- Task-Free Inference (entropy-based task selection) ---")
-            correct_total = 0
-            total_samples = 0
-            for eval_task in range(benchmark.num_tasks):
-                test_loader = benchmark.get_test_loader(eval_task)
-                correct = 0
-                total = 0
-                for x, y in test_loader:
-                    x, y = x.to(self.device), y.to(self.device)
-                    pred_labels, pred_tasks = self.model.predict_task_free(x)
-                    correct += (pred_labels == y).sum().item()
-                    total += x.size(0)
-                acc = correct / total
-                correct_total += correct
-                total_samples += total
-                print(f"  Task {eval_task} (task-free): {acc*100:.1f}%")
-            overall = correct_total / total_samples
-            print(f"  Overall task-free accuracy: {overall*100:.1f}%")
+            tracker.task_free = evaluate_task_free(self.model, benchmark, self.device)
+            for row in tracker.task_free['per_task']:
+                print(f"  Task {row['task_id']} (task-free): {row['accuracy']*100:.1f}%")
+            print(f"  Global-label accuracy: {tracker.task_free['accuracy']*100:.1f}%")
+            print(f"  Task selection: {tracker.task_free['task_selection_accuracy']*100:.1f}%")
 
         return tracker

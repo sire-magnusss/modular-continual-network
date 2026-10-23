@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import List, Tuple
+from models.lifecycle import FrozenTaskLifecycle
 
 
 # Task module
@@ -12,7 +13,7 @@ class TaskModule(nn.Module):
     """Task-specific CNN adapter that outputs a feature vector."""
 
     def __init__(self, in_channels: int = 3, out_dim: int = 256,
-                 input_size: int = 32):
+                 input_size: int = 32, use_gate: bool = True):
         super().__init__()
 
         # Three max-pools reduce 32x32 to 4x4 and 28x28 to 3x3.
@@ -46,11 +47,11 @@ class TaskModule(nn.Module):
         )
 
         # Start the adapter contribution small and let training open it.
-        self.gate = nn.Parameter(torch.tensor([-3.0]))
+        self.gate = nn.Parameter(torch.tensor([-3.0])) if use_gate else None
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         feat = self.fc(self.conv_blocks(x))
-        return feat * torch.sigmoid(self.gate)
+        return feat * torch.sigmoid(self.gate) if self.gate is not None else feat
 
 
 # Router
@@ -95,7 +96,7 @@ class Router(nn.Module):
 
 # MCN model
 
-class MCN(nn.Module):
+class MCN(FrozenTaskLifecycle, nn.Module):
     """Base encoder plus task-specific adapters, routers, and heads."""
 
     def __init__(self, num_tasks: int, num_classes_per_task: int,
@@ -174,6 +175,12 @@ class MCN(nn.Module):
         blended   = self.routers[task_id](base_feat, task_feat)
         return self.heads[task_id](blended)
 
+    def _base_modules_to_freeze(self):
+        return (self.base_low, self.base_high) if self.freeze_all else (self.base_low,)
+
+    def _task_components(self, task_id):
+        return (self.task_modules[task_id], self.routers[task_id], self.heads[task_id])
+
     def freeze_base_encoder(self):
         """
         Freeze the base after Task 0.
@@ -187,6 +194,7 @@ class MCN(nn.Module):
             for param in self.base_high.parameters():
                 param.requires_grad = False
         self._base_frozen = True
+        self.train(self.training)
         low_p  = sum(p.numel() for p in self.base_low.parameters())
         high_p = sum(p.numel() for p in self.base_high.parameters())
         if self.freeze_all:
@@ -239,12 +247,9 @@ class MCN(nn.Module):
         Returns per-sample (predicted_label, predicted_task_id).
 
         Complexity is O(T) forward passes.
-        Accuracy depends on task separation: if two tasks have similar inputs
-        (like MNIST digits across permutations), entropy discrimination degrades.
-        For visually distinct tasks (CIFAR), entropy reliably picks the right task.
-
-        This approximates task-free evaluation by selecting a task head from
-        model confidence.
+        Returns task-local class IDs. The evaluator must map them to global
+        class IDs for benchmarks whose tasks have disjoint label sets.
+        Entropy is an uncalibrated heuristic, not a guarantee of correct routing.
         """
         self.eval()
         if self._num_trained == 0:

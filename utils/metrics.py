@@ -16,6 +16,7 @@ import numpy as np
 class MetricTracker:
     def __init__(self, num_tasks: int):
         self.num_tasks = num_tasks
+        self.task_free = None
         # R[i][j] = accuracy on task j after training task i
         self.R = np.full((num_tasks, num_tasks), np.nan)
 
@@ -70,6 +71,7 @@ class MetricTracker:
             "backward_transfer": self.backward_transfer(),
             "forgetting_measure": self.forgetting_measure(),
             "accuracy_matrix": self.R.tolist(),
+            "task_free": self.task_free,
         }
 
     def print_matrix(self):
@@ -83,5 +85,5 @@ class MetricTracker:
                 row_str += f"{val*100:5.1f}  " if not np.isnan(val) else "  ---  "
             print(row_str)
         print(f"\nAverage Accuracy : {self.average_accuracy()*100:.2f}%")
-        print(f"Backward Transfer: {self.backward_transfer()*100:.2f}%")
-        print(f"Forgetting Measure: {self.forgetting_measure()*100:.2f}%")
+        print(f"Backward Transfer: {self.backward_transfer()*100:.2f} pp")
+        print(f"Forgetting Measure: {self.forgetting_measure()*100:.2f} pp")

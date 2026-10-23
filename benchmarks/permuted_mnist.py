@@ -19,6 +19,7 @@ class PermutedMNIST:
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.num_workers = num_workers
+        self.permutation_seed = seed
 
         transform = transforms.Compose([
             transforms.ToTensor(),
@@ -54,6 +55,17 @@ class PermutedMNIST:
         if task_id == 0:
             return "Task 0: Original MNIST"
         return f"Task {task_id}: Permuted MNIST (seed variant {task_id})"
+
+    def to_global_labels(self, labels, task_ids):
+        # Every permutation uses the same digit labels.
+        return labels
+
+    def protocol(self):
+        return {"name": self.name, "permutation_seed": self.permutation_seed,
+                "permutations": [p.tolist() for p in self._permutations],
+                "task_classes": [list(range(10)) for _ in range(self.num_tasks)],
+                "task_order": list(range(self.num_tasks)),
+                "transform": repr(self._train_full.transform)}
 
 
 class _PermutedDataset(Dataset):

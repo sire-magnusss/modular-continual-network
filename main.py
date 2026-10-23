@@ -3,6 +3,9 @@
 import argparse
 import sys
 import os
+from pathlib import Path
+import time
+import traceback
 
 # Allow direct execution from the repository root.
 sys.path.insert(0, os.path.dirname(__file__))
@@ -11,6 +14,9 @@ import torch
 from utils.device import get_device
 from utils.metrics import MetricTracker
 from utils.visualization import plot_results
+from utils.experiments import (seed_everything, create_experiment_dir, environment_info,
+                               snapshot_source, write_json, capture_log, cpu_state,
+                               aggregate_runs)
 
 from benchmarks import SplitCIFAR10, PermutedMNIST, SplitCIFAR100
 from models.backbone import CIFARBackbone, MNISTBackbone
@@ -36,7 +42,7 @@ def parse_args():
                         choices=["naive", "ewc", "packnet", "hat", "mcn", "mcn_v2",
                                  "mcn_no_router", "mcn_no_gate", "mcn_base_only"],
                         default=["naive", "ewc", "packnet", "mcn"],
-                        help="Which methods to run (default: all)")
+                        help="Methods to run (default: naive ewc packnet mcn)")
     parser.add_argument("--epochs", type=int, default=5,
                         help="Epochs per task per method (default: 5)")
     parser.add_argument("--tasks", type=int, default=None,
@@ -53,7 +59,35 @@ def parse_args():
                         help="Directory for dataset downloads (default: ./data)")
     parser.add_argument("--no-plots", action="store_true",
                         help="Skip generating plots")
-    return parser.parse_args()
+    parser.add_argument("--seeds", type=int, nargs="+", default=[42],
+                        help="Independent training seeds; each method is reset to each seed")
+    parser.add_argument("--permutation-seed", type=int, default=42,
+                        help="MNIST task-definition seed, separate from training seeds")
+    parser.add_argument("--deterministic", action="store_true",
+                        help="Require deterministic PyTorch algorithms; unsupported kernels raise")
+    parser.add_argument("--task-free", action="store_true",
+                        help="Also evaluate MCN entropy routing in the global label space")
+    parser.add_argument("--device", choices=["auto", "cpu", "cuda", "mps"], default="auto")
+    parser.add_argument("--threads", type=int, default=None,
+                        help="Optional PyTorch CPU thread count")
+    parser.add_argument("--output-dir", default="runs",
+                        help="Root for unique experiment directories")
+    args = parser.parse_args()
+    if args.epochs < 1 or args.batch_size < 1 or not 0 < args.lr < float("inf"):
+        parser.error("epochs, batch-size and finite lr must be positive")
+    if len(set(args.seeds)) != len(args.seeds):
+        parser.error("seeds must be unique")
+    if len(set(args.methods)) != len(args.methods):
+        parser.error("methods must be unique")
+    if any(seed < 0 or seed >= 2**32 for seed in [*args.seeds, args.permutation_seed]):
+        parser.error("seeds must be between 0 and 2**32 - 1")
+    if args.tasks is not None:
+        maximum = {"cifar10": 5, "cifar100": 20}.get(args.benchmark)
+        if args.tasks < 1 or (maximum and args.tasks > maximum):
+            parser.error("tasks must be positive and within the benchmark's task count")
+    if args.threads is not None and args.threads < 1:
+        parser.error("threads must be positive")
+    return args
 
 
 def build_benchmark(args):
@@ -74,7 +108,8 @@ def build_benchmark(args):
     else:  # mnist
         num_tasks = args.tasks or 5
         benchmark = PermutedMNIST(
-            num_tasks=num_tasks, data_dir=args.data_dir, batch_size=args.batch_size
+            num_tasks=num_tasks, data_dir=args.data_dir, batch_size=args.batch_size,
+            seed=args.permutation_seed
         )
         return benchmark, "mnist"
 
@@ -85,8 +120,8 @@ def build_model(benchmark_type: str, num_tasks: int, method: str,
     sz    = 28 if benchmark_type == "mnist" else 32
     n_cls = {"cifar10": 2, "cifar100": 5, "mnist": 10}[benchmark_type]
 
-    # CIFAR (diverse object classes): full base freeze wins
-    # MNIST (permuted, same structure): adaptive high-level freeze helps
+    # Preserve the historical benchmark-specific policy. Its relative merits
+    # require controlled reruns; this is not evidence that either policy wins.
     adaptive = (benchmark_type == "mnist")
 
     if method == "hat":
@@ -146,7 +181,7 @@ def run_method(method_name: str, model, benchmark,
                                  epochs_phase2=max(1, args.epochs // 3))
     elif method_name in ("mcn", "mcn_v2", "mcn_no_router", "mcn_no_gate", "mcn_base_only"):
         trainer = MCNTrainer(model, device, lr=args.lr,
-                             epochs_per_task=args.epochs)
+                             epochs_per_task=args.epochs, task_free=args.task_free)
 
     trainer.run(benchmark, tracker)
     return tracker
@@ -162,8 +197,8 @@ def print_final_comparison(results: dict):
         s = tracker.summary()
         print(f"{method:<12} "
               f"{s['average_accuracy']*100:>9.1f}%"
-              f"{s['backward_transfer']*100:>9.1f}%"
-              f"{s['forgetting_measure']*100:>11.1f}%")
+              f"{s['backward_transfer']*100:>8.1f}pp"
+              f"{s['forgetting_measure']*100:>10.1f}pp")
     print()
     print("Avg Acc    - higher is better (accuracy after all tasks)")
     print("BWT        - less negative is better (negative = forgetting)")
@@ -172,7 +207,10 @@ def print_final_comparison(results: dict):
 
 def main():
     args = parse_args()
-    device = get_device()
+    seed_everything(args.seeds[0], args.deterministic)
+    if args.threads is not None:
+        torch.set_num_threads(args.threads)
+    device = get_device() if args.device == "auto" else torch.device(args.device)
 
     print(f"\nBenchmark : {args.benchmark.upper()}")
     print(f"Methods   : {', '.join(args.methods)}")
@@ -182,24 +220,75 @@ def main():
     benchmark, benchmark_type = build_benchmark(args)
     print(f"Tasks     : {benchmark.num_tasks}")
 
-    results = {}
+    experiment_dir = create_experiment_dir(args.output_dir, args.benchmark)
+    print(f"Artifacts : {experiment_dir.resolve()}")
+    source = snapshot_source(Path(__file__).resolve().parent, experiment_dir / "source.zip")
+    environment = environment_info(device)
+    write_json(experiment_dir / "experiment.json", {
+        "schema_version": 1, "arguments": vars(args), "source": source,
+        "environment": environment, "protocol": benchmark.protocol(),
+        "metric_units": "fractions; multiply by 100 for percent/percentage points",
+        "primary_evaluation": "task-incremental (task ID supplied)",
+    })
+    records = []
+    for seed in args.seeds:
+        results = {}
+        for method_name in args.methods:
+            run_dir = experiment_dir / f"seed_{seed}" / method_name
+            run_dir.mkdir(parents=True)
+            model_config = {
+                "benchmark_type": benchmark_type, "num_tasks": benchmark.num_tasks,
+                "method": method_name, "ewc_lambda": args.ewc_lambda,
+                "packnet_prune": args.packnet_prune,
+            }
+            record = {"schema_version": 1, "method": method_name, "seed": seed,
+                      "status": "running", "arguments": vars(args),
+                      "model_config": model_config,
+                      "experiment_manifest": "../../experiment.json",
+                      "source_archive": "../../source.zip"}
+            write_json(run_dir / "run.json", record)
+            with capture_log(run_dir / "train.log"):
+                try:
+                    seed_everything(seed, args.deterministic)
+                    print(f"Method: {method_name}; seed: {seed}; device: {device}")
+                    model = build_model(**model_config)
+                    record["total_parameters"] = sum(p.numel() for p in model.parameters())
+                    started = time.perf_counter()
+                    tracker = run_method(method_name, model, benchmark, device, args)
+                    if device.type == "cuda":
+                        torch.cuda.synchronize()
+                    elif device.type == "mps":
+                        torch.mps.synchronize()
+                    record["train_and_evaluation_seconds"] = time.perf_counter() - started
+                    record["metrics"] = tracker.summary()
+                    # Final inference checkpoint, not an optimizer/training-resume snapshot.
+                    torch.save({"schema_version": 1, "model_config": model_config,
+                                "state_dict": cpu_state(model.state_dict()), "seed": seed},
+                               run_dir / "final_model.pt")
+                    record["checkpoint_bytes"] = (run_dir / "final_model.pt").stat().st_size
+                    record["status"] = "complete"
+                    write_json(run_dir / "run.json", record)
+                    records.append(record)
+                    results[method_name.capitalize()] = tracker
+                except Exception as error:
+                    record["status"] = "failed"
+                    record["error"] = f"{type(error).__name__}: {error}"
+                    write_json(run_dir / "run.json", record)
+                    traceback.print_exc()
+                    raise
+            write_json(experiment_dir / "summary.json", aggregate_runs(records))
+        print(f"\nSeed {seed}")
+        print_final_comparison(results)
+        if not args.no_plots:
+            plot_results(results, benchmark.name,
+                         output_dir=experiment_dir / f"seed_{seed}" / "plots")
 
-    for method_name in args.methods:
-        model = build_model(
-            benchmark_type=benchmark_type,
-            num_tasks=benchmark.num_tasks,
-            method=method_name,
-            ewc_lambda=args.ewc_lambda,
-            packnet_prune=args.packnet_prune
-        )
-        tracker = run_method(method_name, model, benchmark, device, args)
-        results[method_name.capitalize()] = tracker
-
-    print_final_comparison(results)
-
-    if not args.no_plots and len(results) > 0:
-        print("\nGenerating plots...")
-        plot_results(results, benchmark.name)
+    print("\nAcross-seed average accuracy (sample standard deviation):")
+    for method, summary in aggregate_runs(records).items():
+        metric = summary["average_accuracy"]
+        spread = f"{metric['std'] * 100:.2f} pp" if metric['std'] is not None else "undefined (one seed)"
+        print(f"  {method}: {metric['mean'] * 100:.2f}%; std={spread}; n={summary['n']}")
+    print(f"Run records and summary: {experiment_dir.resolve()}")
 
 
 if __name__ == "__main__":

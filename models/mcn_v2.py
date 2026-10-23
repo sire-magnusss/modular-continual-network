@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import List, Tuple
+from models.lifecycle import FrozenTaskLifecycle
 
 
 # Shared building blocks
@@ -136,7 +137,7 @@ class CrossTaskAttention(nn.Module):
 
 # MCN v2
 
-class MCNv2(nn.Module):
+class MCNv2(FrozenTaskLifecycle, nn.Module):
     """MCN with per-task cross-attention over previous modules."""
 
     def __init__(self, num_tasks: int, num_classes_per_task: int,
@@ -241,6 +242,7 @@ class MCNv2(nn.Module):
             for param in self.base_high.parameters():
                 param.requires_grad = False
         self._base_frozen = True
+        self.train(self.training)
 
         low_p  = sum(p.numel() for p in self.base_low.parameters())
         high_p = sum(p.numel() for p in self.base_high.parameters())
@@ -251,21 +253,12 @@ class MCNv2(nn.Module):
             print(f"[MCN-v2] base_low frozen ({low_p:,} params). "
                   f"base_high adaptive ({high_p:,} params @ {self.adaptive_lr_scale}x lr).")
 
-    def freeze_task(self, task_id: int):
-        """
-        Freeze all components for a completed task.
+    def _base_modules_to_freeze(self):
+        return (self.base_low, self.base_high) if self.freeze_all else (self.base_low,)
 
-        Future tasks can still read the task module output through
-        cross-task attention.
-        """
-        for param in self.task_modules[task_id].parameters():
-            param.requires_grad = False
-        for param in self.cross_attns[task_id].parameters():
-            param.requires_grad = False
-        for param in self.routers[task_id].parameters():
-            param.requires_grad = False
-        for param in self.heads[task_id].parameters():
-            param.requires_grad = False
+    def _task_components(self, task_id):
+        return (self.task_modules[task_id], self.cross_attns[task_id],
+                self.routers[task_id], self.heads[task_id])
 
     def get_task_param_groups(self, task_id: int, base_lr: float) -> list:
         """
