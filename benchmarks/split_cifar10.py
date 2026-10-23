@@ -1,6 +1,7 @@
 """Split-CIFAR-10 benchmark."""
 
 from typing import List, Tuple
+import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
@@ -57,7 +58,7 @@ class SplitCIFAR10:
     def _filter_indices(self, dataset, original_classes: List[int]) -> Tuple[list, dict]:
         """Return indices where label is in original_classes, plus a remapping dict."""
         remap = {orig: new for new, orig in enumerate(original_classes)}
-        indices = [i for i, (_, label) in enumerate(dataset)
+        indices = [i for i, label in enumerate(dataset.targets)
                    if label in original_classes]
         return indices, remap
 
@@ -96,3 +97,13 @@ class SplitCIFAR10:
         classes = TASK_CLASSES[task_id]
         names = " vs ".join(CLASS_NAMES[c] for c in classes)
         return f"Task {task_id}: {names}"
+
+    def to_global_labels(self, labels, task_ids):
+        mapping = torch.tensor(TASK_CLASSES[:self.num_tasks], device=labels.device)
+        return mapping[task_ids, labels]
+
+    def protocol(self):
+        return {"name": self.name, "task_classes": TASK_CLASSES[:self.num_tasks],
+                "task_order": list(range(self.num_tasks)),
+                "train_transform": repr(self._train_full.transform),
+                "test_transform": repr(self._test_full.transform)}

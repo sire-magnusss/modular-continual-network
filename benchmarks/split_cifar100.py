@@ -1,6 +1,7 @@
 """Split-CIFAR-100 benchmark."""
 
 from typing import List
+import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
@@ -46,7 +47,7 @@ class SplitCIFAR100:
 
     def _make_remapped_subset(self, dataset, original_classes: List[int]):
         remap = {orig: new for new, orig in enumerate(original_classes)}
-        indices = [i for i, (_, label) in enumerate(dataset)
+        indices = [i for i, label in enumerate(dataset.targets)
                    if label in original_classes]
 
         class RemappedSubset:
@@ -75,3 +76,13 @@ class SplitCIFAR100:
     def task_description(self, task_id: int) -> str:
         classes = TASK_CLASSES[task_id]
         return f"Task {task_id:02d}: CIFAR-100 classes {classes[0]}-{classes[-1]}"
+
+    def to_global_labels(self, labels, task_ids):
+        mapping = torch.tensor(TASK_CLASSES[:self.num_tasks], device=labels.device)
+        return mapping[task_ids, labels]
+
+    def protocol(self):
+        return {"name": self.name, "task_classes": TASK_CLASSES[:self.num_tasks],
+                "task_order": list(range(self.num_tasks)),
+                "train_transform": repr(self._train_full.transform),
+                "test_transform": repr(self._test_full.transform)}

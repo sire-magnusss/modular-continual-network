@@ -15,11 +15,7 @@ COLORS = ["#2196F3", "#F44336", "#4CAF50", "#FF9800", "#9C27B0"]
 RESULTS_DIR = os.path.join(os.path.dirname(__file__), "..", "results", "plots")
 
 
-def _ensure_dir():
-    os.makedirs(RESULTS_DIR, exist_ok=True)
-
-
-def plot_results(results: dict, benchmark_name: str):
+def plot_results(results: dict, benchmark_name: str, output_dir=RESULTS_DIR):
     """
     results = {
         "Naive": MetricTracker,
@@ -28,14 +24,14 @@ def plot_results(results: dict, benchmark_name: str):
     }
     Generates three plots and saves them.
     """
-    _ensure_dir()
-    _plot_accuracy_matrix(results, benchmark_name)
-    _plot_per_task_accuracy(results, benchmark_name)
-    _plot_summary_bar(results, benchmark_name)
-    print(f"\n[viz] Plots saved to {os.path.abspath(RESULTS_DIR)}/")
+    os.makedirs(output_dir, exist_ok=True)
+    _plot_accuracy_matrix(results, benchmark_name, output_dir)
+    _plot_per_task_accuracy(results, benchmark_name, output_dir)
+    _plot_summary_bar(results, benchmark_name, output_dir)
+    print(f"\n[viz] Plots saved to {os.path.abspath(output_dir)}/")
 
 
-def _plot_accuracy_matrix(results, benchmark_name):
+def _plot_accuracy_matrix(results, benchmark_name, output_dir):
     n_methods = len(results)
     fig, axes = plt.subplots(1, n_methods, figsize=(5 * n_methods, 4))
     if n_methods == 1:
@@ -67,12 +63,12 @@ def _plot_accuracy_matrix(results, benchmark_name):
 
     fig.suptitle(f"Accuracy Matrix - {benchmark_name}", fontsize=14)
     plt.tight_layout()
-    path = os.path.join(RESULTS_DIR, f"{benchmark_name}_accuracy_matrix.png")
+    path = os.path.join(output_dir, f"{benchmark_name}_accuracy_matrix.png")
     plt.savefig(path, dpi=150, bbox_inches="tight")
     plt.close()
 
 
-def _plot_per_task_accuracy(results, benchmark_name):
+def _plot_per_task_accuracy(results, benchmark_name, output_dir):
     # For each method, show how accuracy on each task evolves as more tasks are trained
     method_names = list(results.keys())
     num_tasks = list(results.values())[0].num_tasks
@@ -106,12 +102,12 @@ def _plot_per_task_accuracy(results, benchmark_name):
 
     fig.suptitle(f"Per-Task Accuracy Over Training - {benchmark_name}", fontsize=13)
     plt.tight_layout()
-    path = os.path.join(RESULTS_DIR, f"{benchmark_name}_per_task.png")
+    path = os.path.join(output_dir, f"{benchmark_name}_per_task.png")
     plt.savefig(path, dpi=150, bbox_inches="tight")
     plt.close()
 
 
-def _plot_summary_bar(results, benchmark_name):
+def _plot_summary_bar(results, benchmark_name, output_dir):
     method_names = list(results.keys())
     aa_vals   = [t.average_accuracy() * 100 for t in results.values()]
     bwt_vals  = [t.backward_transfer() * 100 for t in results.values()]
@@ -122,12 +118,12 @@ def _plot_summary_bar(results, benchmark_name):
 
     fig, ax = plt.subplots(figsize=(8, 5))
     bars1 = ax.bar(x - width, aa_vals,  width, label="Avg Accuracy (%)",      color="#4CAF50")
-    bars2 = ax.bar(x,         bwt_vals, width, label="Backward Transfer (%)", color="#2196F3")
-    bars3 = ax.bar(x + width, fm_vals,  width, label="Forgetting (%)",        color="#F44336")
+    bars2 = ax.bar(x,         bwt_vals, width, label="Backward Transfer (pp)", color="#2196F3")
+    bars3 = ax.bar(x + width, fm_vals,  width, label="Forgetting (pp)",        color="#F44336")
 
     ax.set_xticks(x)
     ax.set_xticklabels(method_names, fontsize=12)
-    ax.set_ylabel("Value (%)")
+    ax.set_ylabel("Accuracy (%) / change (percentage points)")
     ax.set_title(f"Summary Metrics - {benchmark_name}", fontsize=13)
     ax.legend()
     ax.axhline(0, color="black", linewidth=0.8)
@@ -141,6 +137,6 @@ def _plot_summary_bar(results, benchmark_name):
                     ha="center", va="bottom", fontsize=8)
 
     plt.tight_layout()
-    path = os.path.join(RESULTS_DIR, f"{benchmark_name}_summary.png")
+    path = os.path.join(output_dir, f"{benchmark_name}_summary.png")
     plt.savefig(path, dpi=150, bbox_inches="tight")
     plt.close()
